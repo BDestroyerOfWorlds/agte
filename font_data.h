@@ -1,3 +1,9 @@
+//  Copyright (c) 2019, The Lilex Project Authors (https://github.com/mishamyrt/lilex)
+
+//  This Font Software is licensed under the SIL Open Font License, Version 1.1.
+//  This license is copied below, and is also available with a FAQ at:
+//  http://scripts.sil.org/OFL
+
 unsigned char LilexNerdFontMono_Regular_ttf[] = {
   0x00, 0x01, 0x00, 0x00, 0x00, 0x14, 0x01, 0x00, 0x00, 0x04, 0x00, 0x40,
   0x47, 0x44, 0x45, 0x46, 0x36, 0x01, 0x42, 0x4b, 0x00, 0x25, 0x09, 0x3c,
