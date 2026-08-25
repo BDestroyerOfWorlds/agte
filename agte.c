@@ -1,6 +1,6 @@
 /*
    agte - A Graphical (GUI) Text Editor
-   Copyright (C) 2026 B Keskin
+   Copyright (C) 2026 B. Keskin
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Affero General Public License as published
@@ -14,6 +14,8 @@
 
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+   contact me at bkeskinsoftware@gmail.com
 */
 
 #include "font_data.h"
