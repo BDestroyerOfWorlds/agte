@@ -15,7 +15,7 @@
    You should have received a copy of the GNU Affero General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-   contact me at bkeskinsoftware@gmail.com
+   Contact me at bkeskinsoftware@gmail.com
 */
 
 #include "font_data.h"
@@ -25,6 +25,7 @@
 #define LOADED 0
 #define NOT_FOUND 1
 #define OVERSIZE_LOAD 2
+
 #define MAX_BUFFER_LEN 16384
 
 int
@@ -94,14 +95,15 @@ main (int argc, char *argv[])
 
   Font Lilex
       = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
-                            LilexNerdFontMono_Regular_ttf_len, 16, NULL, 0);
+                            LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
 
   while (!WindowShouldClose ())
     {
       BeginDrawing ();
-      ClearBackground (GRAY);
+      ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
 
-      DrawTextEx (Lilex, buffer, (Vector2){ 16, 16 }, 16, 1, WHITE);
+      DrawTextEx (Lilex, buffer, (Vector2){ 32, 0 }, 20, 1,
+                  (Color){ 0xF0, 0xF3, 0xF6, 255 });
 
       EndDrawing ();
     }
