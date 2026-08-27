@@ -28,6 +28,8 @@
 
 #define MAX_BUFFER_LEN 16384
 
+/*****************************************************************************/
+
 int
 load_file (const char *path, char *buffer, int max_len, int *out_chr_cnt)
 {
@@ -58,6 +60,32 @@ load_file (const char *path, char *buffer, int max_len, int *out_chr_cnt)
   return LOADED;
 }
 
+/*****************************************************************************/
+
+void
+get_cursor_coordinates (const char *buffer, int cursor_posi, int *out_line,
+                        int *out_col)
+{
+  int line = 0;
+  int col = 0;
+  for (int i = 0; i < cursor_posi; i++)
+    {
+      if (buffer[i] == '\n')
+        {
+          line++;
+          col = 0;
+        }
+      else
+        {
+          col++;
+        }
+    }
+  *out_line = line;
+  *out_col = col;
+}
+
+/*****************************************************************************/
+
 int
 main (int argc, char *argv[])
 {
@@ -70,6 +98,7 @@ main (int argc, char *argv[])
 
   char buffer[MAX_BUFFER_LEN + 1];
   int chr_count = 0;
+  int cursor_posi = chr_count;
   char *path = argv[1];
 
   int load_result = load_file (path, buffer, MAX_BUFFER_LEN, &chr_count);
@@ -97,13 +126,59 @@ main (int argc, char *argv[])
       = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
                             LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
 
+  float char_width = MeasureTextEx (Lilex, "MM", 20, 1).x / 2.0f;
+
   while (!WindowShouldClose ())
     {
       BeginDrawing ();
+
+      int key = GetCharPressed ();
+      while (key > 0)
+        {
+          if ((key > 31) && (key < 126) && chr_count < MAX_BUFFER_LEN)
+            {
+              for (int i = chr_count; i > cursor_posi; i--)
+                {
+                  buffer[i] = buffer[i - 1];
+                }
+              buffer[cursor_posi] = (char)key;
+              chr_count++;
+              cursor_posi++;
+              buffer[chr_count] = '\0';
+            }
+          key = GetCharPressed ();
+        }
+
+      if (IsKeyPressed (KEY_BACKSPACE) && cursor_posi > 0)
+        {
+          for (int i = cursor_posi; i < chr_count; i++)
+            {
+              buffer[i - 1] = buffer[i];
+            }
+          chr_count--;
+          cursor_posi--;
+          buffer[chr_count] = '\0';
+        }
+
+      if (IsKeyPressed (KEY_LEFT) && cursor_posi > 0)
+        cursor_posi--;
+
+      if (IsKeyPressed (KEY_RIGHT) && chr_count > cursor_posi)
+        cursor_posi++;
+
       ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
 
-      DrawTextEx (Lilex, buffer, (Vector2){ 32, 0 }, 20, 1,
+      DrawTextEx (Lilex, buffer, (Vector2){ 32, 16 }, 20, 1,
                   (Color){ 0xF0, 0xF3, 0xF6, 255 });
+
+      int cursor_line, cursor_col;
+      get_cursor_coordinates (buffer, cursor_posi, &cursor_line, &cursor_col);
+
+      float cursor_x = 32 + (cursor_col * char_width);
+      float cursor_y = 16 + ((cursor_line * 24) + 16);
+
+      DrawRectangle (cursor_x, cursor_y, 8, 2,
+                     (Color){ 0xF0, 0xF3, 0xF6, 255 });
 
       EndDrawing ();
     }
