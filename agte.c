@@ -174,8 +174,8 @@ main (int argc, char *argv[])
       int cursor_line, cursor_col;
       get_cursor_coordinates (buffer, cursor_posi, &cursor_line, &cursor_col);
 
-      float cursor_x = 32 + (cursor_col * char_width);
-      float cursor_y = 32 + (cursor_line * 24);
+      float cursor_x = 32 + (cursor_col * (char_width + 0.5f));
+      float cursor_y = 32 + (cursor_line * 22);
 
       DrawRectangle (cursor_x, cursor_y, 8, 2,
                      (Color){ 0xF0, 0xF3, 0xF6, 255 });
