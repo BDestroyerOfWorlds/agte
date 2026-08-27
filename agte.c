@@ -126,7 +126,7 @@ main (int argc, char *argv[])
       = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
                             LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
 
-  float char_width = MeasureTextEx (Lilex, "MM", 20, 1).x / 2.0f;
+  float char_width = MeasureTextEx (Lilex, "WW", 20, 1).x / 2.0f;
 
   while (!WindowShouldClose ())
     {
@@ -175,7 +175,7 @@ main (int argc, char *argv[])
       get_cursor_coordinates (buffer, cursor_posi, &cursor_line, &cursor_col);
 
       float cursor_x = 32 + (cursor_col * char_width);
-      float cursor_y = 16 + ((cursor_line * 24) + 16);
+      float cursor_y = 32 + (cursor_line * 24);
 
       DrawRectangle (cursor_x, cursor_y, 8, 2,
                      (Color){ 0xF0, 0xF3, 0xF6, 255 });
