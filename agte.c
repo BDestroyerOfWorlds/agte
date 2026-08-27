@@ -166,6 +166,11 @@ main (int argc, char *argv[])
       if (IsKeyPressed (KEY_RIGHT) && chr_count > cursor_posi)
         cursor_posi++;
 
+      if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
+        {
+          SaveFileText (path, buffer);
+        }
+
       ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
 
       DrawTextEx (Lilex, buffer, (Vector2){ 32, 16 }, 20, 1,
