@@ -149,7 +149,10 @@ main (int argc, char *argv[])
           key = GetCharPressed ();
         }
 
-      if (IsKeyPressed (KEY_BACKSPACE) && cursor_posi > 0)
+      //// CONTROLS SECTION
+
+      if ((IsKeyPressed (KEY_BACKSPACE)
+           || (IsKeyPressedRepeat (KEY_BACKSPACE)) && cursor_posi > 0))
         {
           for (int i = cursor_posi; i < chr_count; i++)
             {
@@ -160,10 +163,12 @@ main (int argc, char *argv[])
           buffer[chr_count] = '\0';
         }
 
-      if (IsKeyPressed (KEY_LEFT) && cursor_posi > 0)
+      if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
+          && cursor_posi > 0)
         cursor_posi--;
 
-      if (IsKeyPressed (KEY_RIGHT) && chr_count > cursor_posi)
+      if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
+          && chr_count > cursor_posi)
         cursor_posi++;
 
       if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
@@ -171,18 +176,93 @@ main (int argc, char *argv[])
           SaveFileText (path, buffer);
         }
 
+      int cursor_line, cursor_col;
+      get_cursor_coordinates (buffer, cursor_posi, &cursor_line, &cursor_col);
+
+      if ((IsKeyPressed (KEY_UP) || IsKeyPressedRepeat (KEY_UP))
+          && cursor_line > 0)
+        {
+          int target_line = cursor_line - 1;
+          int line = 0;
+          int start = 0;
+          int length = 0;
+          for (int i = 0; i < chr_count; i++)
+            {
+              if ((line == target_line)
+                  && ((buffer[i] == '\n') || (i == chr_count)))
+                {
+                  length = i - start;
+                  break;
+                }
+              if (buffer[i] == '\n')
+                {
+                  line++;
+                  start = i + 1;
+                }
+            }
+          int new_col;
+          if (cursor_col < length)
+            new_col = cursor_col;
+          else
+            new_col = length;
+          cursor_posi = start + new_col;
+        }
+
+      if (IsKeyPressed (KEY_DOWN) || IsKeyPressedRepeat (KEY_DOWN))
+        {
+          int target_line = cursor_line + 1;
+          int line = 0;
+          int start = -1;
+          int length = 0;
+          for (int i = 0; i < chr_count; i++)
+            {
+              if ((line == target_line)
+                  && ((buffer[i] == '\n') || (i == chr_count)))
+                {
+                  length = i - start;
+                  break;
+                }
+              if (buffer[i] == '\n')
+                {
+                  line++;
+                  start = i + 1;
+                }
+            }
+          if (start != -1)
+            {
+              int new_col;
+              if (cursor_col < length)
+                new_col = cursor_col;
+              else
+                new_col = length;
+              cursor_posi = start + new_col;
+            }
+        }
+
+      if (IsKeyPressed (KEY_ENTER)
+          || (IsKeyPressedRepeat (KEY_ENTER)) && chr_count < MAX_BUFFER_LEN)
+        {
+          for (int i = chr_count; i > cursor_posi; i--)
+            {
+              buffer[i] = buffer[i - 1];
+            }
+          buffer[cursor_posi] = '\n';
+          chr_count++;
+          cursor_posi++;
+          buffer[chr_count] = '\0';
+        }
+
+      //// CONTROLS SECTION
+
       ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
 
       DrawTextEx (Lilex, buffer, (Vector2){ 32, 16 }, 20, 1,
                   (Color){ 0xF0, 0xF3, 0xF6, 255 });
 
-      int cursor_line, cursor_col;
-      get_cursor_coordinates (buffer, cursor_posi, &cursor_line, &cursor_col);
-
       float cursor_x = 32 + (cursor_col * (char_width + 0.5f));
-      float cursor_y = 32 + (cursor_line * 22);
+      float cursor_y = 16 + (cursor_line * 22);
 
-      DrawRectangle (cursor_x, cursor_y, 8, 2,
+      DrawRectangle (cursor_x, cursor_y, 2, 16,
                      (Color){ 0xF0, 0xF3, 0xF6, 255 });
 
       EndDrawing ();
