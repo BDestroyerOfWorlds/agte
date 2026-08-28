@@ -106,9 +106,7 @@ main (int argc, char *argv[])
   switch (load_result)
     {
     case NOT_FOUND:
-      printf (
-          "file not found, creating...\n"); // i know it says creating but it
-                                            // doesnt do shit rn that TODO
+      printf ("file not found, creating...\n");
       break;
 
     case OVERSIZE_LOAD:
