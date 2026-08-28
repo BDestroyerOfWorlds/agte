@@ -5,3 +5,4 @@ Usage:
 ```
 agte <filename>
 ```
+Arrow keys to move the cursor, (CTRL + S) to save.
