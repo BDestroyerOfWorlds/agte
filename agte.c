@@ -1,23 +1,27 @@
 /*
-   agte - A Graphical (GUI) Text Editor
-   Copyright (C) 2026 B. Keskin
+ *  agte - A Graphical (GUI) Text Editor
+ *  Copyright (C) 2026 B. Keskin
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ *  Contact me at bkeskinsoftware@gmail.com
+ */
 
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU Affero General Public License as published
-   by the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU Affero General Public License for more details.
-
-   You should have received a copy of the GNU Affero General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-   Contact me at bkeskinsoftware@gmail.com
-*/
-
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 #define RAYGUI_IMPLEMENTATION
 #include "font_data.h"
 #include "raygui.h"
@@ -25,42 +29,57 @@
 #include <raylib.h>
 #include <stdio.h>
 
-#define LOADED 0
-#define NOT_FOUND 1
-#define OVERSIZE_LOAD 2
-
-#define MAX_BUFFER_LEN 16384
-
 /*****************************************************************************/
 
-int
-load_file (const char *path, char *buffer, int max_len, int *out_chr_cnt)
+char *
+load_file (const char *path, int *out_chr_cnt)
 {
   char *file_text = LoadFileText (path);
 
   if (file_text == NULL)
     {
-      return NOT_FOUND;
+      return NULL;
     }
 
   int len = TextLength (file_text);
+  char *buffer = malloc (len + 1);
 
-  if (len > max_len)
+  if (buffer == NULL)
     {
       UnloadFileText (file_text);
-      return OVERSIZE_LOAD;
+      return NULL;
     }
 
-  for (int i = 0; i < len; i++)
-    {
-      buffer[i] = file_text[i];
-    }
-
-  buffer[len] = '\0';
+  memcpy (buffer, file_text, len + 1);
   *out_chr_cnt = len;
+
   UnloadFileText (file_text);
 
-  return LOADED;
+  return buffer;
+}
+
+/*****************************************************************************/
+
+bool
+cap_enough (char **buffer, size_t *current_cap, size_t needed_cap)
+{
+  if (needed_cap <= *current_cap)
+    {
+      return true;
+    }
+
+  size_t next_cap = (*current_cap * 2);
+  if (next_cap < needed_cap)
+    {
+      next_cap = needed_cap;
+    }
+  char *new_buf = realloc (*buffer, next_cap);
+  if (new_buf == NULL)
+    return false;
+
+  *buffer = new_buf;
+  *current_cap = next_cap;
+  return true;
 }
 
 /*****************************************************************************/
@@ -99,26 +118,30 @@ main (int argc, char *argv[])
       return -1;
     }
 
-  char buffer[MAX_BUFFER_LEN + 1];
+  char *buffer = NULL;
+  size_t buffer_capacity = 0;
   int chr_count = 0;
-  int cursor_posi = chr_count;
   char *path = argv[1];
 
-  int load_result = load_file (path, buffer, MAX_BUFFER_LEN, &chr_count);
-
-  switch (load_result)
+  buffer = load_file (path, &chr_count);
+  if (buffer == NULL)
     {
-    case NOT_FOUND:
-      printf ("file not found, creating...\n");
-      break;
-
-    case OVERSIZE_LOAD:
-      printf ("FATAL ERROR: oversize load\n");
-      return -1;
-
-    case LOADED:
-      break;
+      buffer = malloc (1);
+      if (buffer == NULL)
+        {
+          printf ("FATAL ERROR: out of memory\n");
+          return -1;
+        }
+      buffer[0] = '\0';
+      buffer_capacity = 1;
+      chr_count = 0;
     }
+  else
+    {
+      buffer_capacity = chr_count + 1;
+    }
+
+  int cursor_posi = chr_count;
 
   InitWindow (1280, 720, "agte");
   SetTargetFPS (60);
@@ -144,16 +167,20 @@ main (int argc, char *argv[])
       int key = GetCharPressed ();
       while (key > 0)
         {
-          if ((key > 31) && (key < 126) && chr_count < MAX_BUFFER_LEN)
+          if ((key > 31) && (key < 126))
             {
-              for (int i = chr_count; i > cursor_posi; i--)
+              if (cap_enough (&buffer, &buffer_capacity, chr_count + 2))
                 {
-                  buffer[i] = buffer[i - 1];
+
+                  for (int i = chr_count; i > cursor_posi; i--)
+                    {
+                      buffer[i] = buffer[i - 1];
+                    }
+                  buffer[cursor_posi] = (char)key;
+                  chr_count++;
+                  cursor_posi++;
+                  buffer[chr_count] = '\0';
                 }
-              buffer[cursor_posi] = (char)key;
-              chr_count++;
-              cursor_posi++;
-              buffer[chr_count] = '\0';
             }
           key = GetCharPressed ();
         }
@@ -161,7 +188,8 @@ main (int argc, char *argv[])
       //// CONTROLS SECTION
 
       if ((IsKeyPressed (KEY_BACKSPACE)
-           || (IsKeyPressedRepeat (KEY_BACKSPACE)) && cursor_posi > 0))
+           || (IsKeyPressedRepeat (KEY_BACKSPACE)))
+          && cursor_posi > 0)
         {
           for (int i = cursor_posi; i < chr_count; i++)
             {
@@ -248,17 +276,27 @@ main (int argc, char *argv[])
             }
         }
 
-      if (IsKeyPressed (KEY_ENTER)
-          || (IsKeyPressedRepeat (KEY_ENTER)) && chr_count < MAX_BUFFER_LEN)
+      if (IsKeyPressed (KEY_ENTER) || (IsKeyPressedRepeat (KEY_ENTER)))
         {
-          for (int i = chr_count; i > cursor_posi; i--)
+          if (cap_enough (&buffer, &buffer_capacity, chr_count + 2))
             {
-              buffer[i] = buffer[i - 1];
+              for (int i = chr_count; i > cursor_posi; i--)
+                {
+                  buffer[i] = buffer[i - 1];
+                }
+              buffer[cursor_posi] = '\n';
+              chr_count++;
+              cursor_posi++;
+              buffer[chr_count] = '\0';
             }
-          buffer[cursor_posi] = '\n';
-          chr_count++;
-          cursor_posi++;
-          buffer[chr_count] = '\0';
+        }
+      if (IsKeyPressed (KEY_PAGE_UP))
+        {
+          cursor_posi = 0;
+        }
+      if (IsKeyPressed (KEY_PAGE_DOWN))
+        {
+          cursor_posi = chr_count;
         }
 
       //// CONTROLS SECTION
@@ -315,7 +353,8 @@ main (int argc, char *argv[])
     }
 
   UnloadFont (Lilex);
-
+  free (buffer);
+  buffer = NULL;
   WindowShouldClose ();
   return 0;
 }
