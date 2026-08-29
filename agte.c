@@ -18,7 +18,10 @@
    Contact me at bkeskinsoftware@gmail.com
 */
 
+#define RAYGUI_IMPLEMENTATION
 #include "font_data.h"
+#include "raygui.h"
+#include <math.h>
 #include <raylib.h>
 #include <stdio.h>
 
@@ -125,6 +128,14 @@ main (int argc, char *argv[])
                             LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
 
   float char_width = MeasureTextEx (Lilex, "WW", 20, 1).x / 2.0f;
+
+  Vector2 scroll = { 0, 0 };
+  Rectangle view;
+
+  GuiSetStyle (DEFAULT, BACKGROUND_COLOR,
+               ColorToInt ((Color){ 0x0A, 0x0C, 0x10, 255 }));
+  GuiSetStyle (DEFAULT, LINE_COLOR,
+               ColorToInt ((Color){ 0xF0, 0xF3, 0xF6, 255 }));
 
   while (!WindowShouldClose ())
     {
@@ -254,14 +265,51 @@ main (int argc, char *argv[])
 
       ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
 
-      DrawTextEx (Lilex, buffer, (Vector2){ 32, 16 }, 20, 1,
-                  (Color){ 0xF0, 0xF3, 0xF6, 255 });
+      int line_count = 1;
+      int max_line_len = 0;
+      int current_len = 0;
 
-      float cursor_x = 32 + (cursor_col * (char_width + 0.5f));
-      float cursor_y = 16 + (cursor_line * 22);
+      for (int i = 0; i < chr_count; i++)
+        {
+          if (buffer[i] == '\n')
+            {
+              line_count++;
+              if (current_len > max_line_len)
+                {
+                  max_line_len = current_len;
+                  current_len = 0;
+                }
+            }
+          else
+            {
+              current_len++;
+            }
+        }
+
+      if (current_len > max_line_len)
+        {
+          max_line_len = current_len;
+        }
+
+      Rectangle panel = { 0, 0, 1280, 720 };
+      Rectangle content
+          = { 0, 0, fmaxf (panel.width, max_line_len * (char_width + 0.5F)),
+              (line_count * 22) + 22 };
+
+      GuiScrollPanel (panel, NULL, content, &scroll, &view);
+
+      BeginScissorMode (view.x, view.y, view.width, view.height);
+
+      DrawTextEx (Lilex, buffer, (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20,
+                  1, (Color){ 0xF0, 0xF3, 0xF6, 255 });
+
+      float cursor_x = 32 + scroll.x + (cursor_col * (char_width + 0.5f));
+      float cursor_y = 16 + scroll.y + (cursor_line * 22);
 
       DrawRectangle (cursor_x, cursor_y, 2, 16,
                      (Color){ 0xF0, 0xF3, 0xF6, 255 });
+
+      EndScissorMode ();
 
       EndDrawing ();
     }
