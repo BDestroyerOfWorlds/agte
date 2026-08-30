@@ -27,6 +27,19 @@ In the current version there is no "save as" capability so make sure you always 
 
 In all honesty having a backup is highly advised, agte is not a production grade program, at least not yet.
 
+## Compilation
+
+```bash
+```bash
+-I. libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
+```
+
+I compile agte with the shown flags, i do not distribute raylib, so please generate your own libraylib.a file.
+```
+```
+```
+```
+
 ## Contributing
 
 Feel free to use the issues section, and even fork agte. For further communication, an e-mail address is provided in the LICENSE.txt file.
