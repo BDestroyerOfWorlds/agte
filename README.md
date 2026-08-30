@@ -4,7 +4,7 @@ agte (A Graphical Text Editor) is meant to be an alternative to nano. It's writt
 
 ## Installation
 
-Use the provided .deb or .rpm package in the releases seciton to install agte.
+Use the provided .deb or .rpm (Coming soon!) package in the releases seciton to install agte.
 
 Follow your GNU/Linux distribution's package manager usage as normal. 
 
