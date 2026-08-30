@@ -223,10 +223,10 @@ main (int argc, char *argv[])
           int line = 0;
           int start = 0;
           int length = 0;
+
           for (int i = 0; i < chr_count; i++)
             {
-              if ((line == target_line)
-                  && ((buffer[i] == '\n') || (i == chr_count)))
+              if ((line == target_line) && ((buffer[i] == '\n')))
                 {
                   length = i - start;
                   break;
@@ -251,12 +251,13 @@ main (int argc, char *argv[])
           int line = 0;
           int start = -1;
           int length = 0;
+          bool line_present = false;
           for (int i = 0; i < chr_count; i++)
             {
-              if ((line == target_line)
-                  && ((buffer[i] == '\n') || (i == chr_count)))
+              if ((line == target_line) && ((buffer[i] == '\n')))
                 {
                   length = i - start;
+                  line_present = true;
                   break;
                 }
               if (buffer[i] == '\n')
@@ -267,6 +268,11 @@ main (int argc, char *argv[])
             }
           if (start != -1)
             {
+              if (!line_present)
+                {
+                  length = chr_count - start;
+                }
+
               int new_col;
               if (cursor_col < length)
                 new_col = cursor_col;
