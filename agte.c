@@ -337,7 +337,8 @@ main (int argc, char *argv[])
 
       Rectangle panel = { 0, 0, 1280, 720 };
       Rectangle content
-          = { 0, 0, fmaxf (panel.width, max_line_len * (char_width + 0.5F)),
+          = { 0, 0,
+              fmaxf (panel.width, 32 + max_line_len * (char_width + 0.5F)),
               (line_count * 22) + 22 };
 
       GuiScrollPanel (panel, NULL, content, &scroll, &view);
