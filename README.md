@@ -33,7 +33,7 @@ In all honesty having a backup is highly advised, agte is not a production grade
 -I. libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
 ```
 
-I compile agte with the shown flags, i do not distribute raylib, so please generate your own libraylib.a file.
+I compile agte with the shown flags, I do not distribute raylib, so please generate your own libraylib.a file.
 
 ## Contributing
 
