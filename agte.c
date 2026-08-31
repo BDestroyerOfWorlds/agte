@@ -321,8 +321,8 @@ main (int argc, char *argv[])
               if (current_len > max_line_len)
                 {
                   max_line_len = current_len;
-                  current_len = 0;
                 }
+              current_len = 0;
             }
           else
             {
