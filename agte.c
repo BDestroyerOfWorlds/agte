@@ -36,26 +36,10 @@ load_file (const char *path, int *out_chr_cnt)
 {
   char *file_text = LoadFileText (path);
 
-  if (file_text == NULL)
-    {
-      return NULL;
-    }
-
   int len = TextLength (file_text);
-  char *buffer = malloc (len + 1);
-
-  if (buffer == NULL)
-    {
-      UnloadFileText (file_text);
-      return NULL;
-    }
-
-  memcpy (buffer, file_text, len + 1);
   *out_chr_cnt = len;
 
-  UnloadFileText (file_text);
-
-  return buffer;
+  return file_text;
 }
 
 /*****************************************************************************/
@@ -363,5 +347,6 @@ main (int argc, char *argv[])
   free (buffer);
   buffer = NULL;
   WindowShouldClose ();
+  CloseWindow ();
   return 0;
 }
