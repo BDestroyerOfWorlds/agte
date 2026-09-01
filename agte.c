@@ -34,12 +34,28 @@
 char *
 load_file (const char *path, int *out_chr_cnt)
 {
-  char *file_text = LoadFileText (path);
+  char *temp_buffer = LoadFileText (path);
 
-  int len = TextLength (file_text);
+  if (temp_buffer == NULL)
+    {
+      return NULL;
+    }
+
+  int len = TextLength (temp_buffer);
+  char *buffer = malloc (len + 1);
+
+  if (buffer == NULL)
+    {
+      UnloadFileText (temp_buffer);
+      return NULL;
+    }
+
+  memcpy (buffer, temp_buffer, len);
+  buffer[len] = '\0';
+  UnloadFileText (temp_buffer);
+
   *out_chr_cnt = len;
-
-  return file_text;
+  return buffer;
 }
 
 /*****************************************************************************/
