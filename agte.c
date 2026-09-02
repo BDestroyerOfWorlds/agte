@@ -399,6 +399,22 @@ main (int argc, char *argv[])
             }
         }
 
+      if (IsKeyPressed (KEY_TAB))
+        {
+          if (cap_enough (&buffer, &buffer_capacity, chr_count + 5))
+            {
+              for (int i = chr_count; i >= cursor_posi; i--)
+                {
+                  buffer[i + 4] = buffer[i];
+                }
+              memcpy (&buffer[cursor_posi], "    ", 4);
+
+              chr_count += 4;
+              cursor_posi += 4;
+              buffer[chr_count] = '\0';
+            }
+        }
+
       //// CONTROLS SECTION
 
       ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
