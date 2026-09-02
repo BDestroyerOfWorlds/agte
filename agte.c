@@ -305,6 +305,100 @@ main (int argc, char *argv[])
           cursor_posi = chr_count;
         }
 
+      if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_C)))
+        {
+          int copy_line_start = cursor_posi;
+          while ((copy_line_start > 0) && buffer[copy_line_start - 1] != '\n')
+            {
+              copy_line_start--;
+            }
+
+          int copy_line_end = cursor_posi;
+          while ((copy_line_end < chr_count) && buffer[copy_line_end] != '\n')
+            {
+              copy_line_end--;
+            }
+
+          int copy_len = copy_line_end - copy_line_start;
+
+          if (copy_len > 0)
+            {
+              char *copy_line = malloc (copy_len + 1);
+              if (copy_line)
+                {
+                  memcpy (copy_line, &buffer[copy_line_start], copy_len);
+                  copy_line[copy_len] = '\0';
+                  SetClipboardText (copy_line);
+                  free (copy_line);
+                }
+            }
+        }
+
+      if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_X)))
+        {
+          int cut_line_start = cursor_posi;
+          while ((cut_line_start > 0) && buffer[cut_line_start - 1] != '\n')
+            {
+              cut_line_start--;
+            }
+
+          int cut_line_end = cursor_posi;
+          while ((cut_line_end < chr_count) && buffer[cut_line_end] != '\n')
+            {
+              cut_line_end--;
+            }
+
+          int cut_len = cut_line_end - cut_line_start;
+
+          if (cut_len > 0)
+            {
+              char *cut_line = malloc (cut_len + 1);
+              if (cut_line)
+                {
+                  memcpy (cut_line, &buffer[cut_line_start], cut_len);
+                  cut_line[cut_len] = '\0';
+                  SetClipboardText (cut_line);
+                  free (cut_line);
+                }
+            }
+          int delete_len = cut_len;
+          if ((cut_line_end < chr_count) && buffer[cut_line_end] == '\n')
+            {
+              delete_len++;
+            }
+
+          for (int i = cut_line_start + delete_len; i <= chr_count; i++)
+            {
+              buffer[i - delete_len] = buffer[i];
+            }
+
+          chr_count -= delete_len;
+          cursor_posi = cut_line_start;
+
+          buffer[chr_count] = '\0';
+        }
+
+      if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
+        {
+          const char *clipboard = GetClipboardText ();
+          if (clipboard && clipboard[0] != '\0')
+            {
+              int clipboard_len = strlen (clipboard);
+              if (cap_enough (&buffer, &buffer_capacity,
+                              chr_count + clipboard_len + 1))
+                {
+                  for (int i = chr_count; i >= cursor_posi; i--)
+                    {
+                      buffer[i + clipboard_len] = buffer[i];
+                    }
+                  memcpy (buffer + cursor_posi, clipboard, clipboard_len);
+                  chr_count += clipboard_len;
+                  cursor_posi += clipboard_len;
+                  buffer[chr_count] = '\0';
+                }
+            }
+        }
+
       //// CONTROLS SECTION
 
       ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
