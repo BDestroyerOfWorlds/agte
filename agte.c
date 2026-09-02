@@ -401,16 +401,16 @@ main (int argc, char *argv[])
 
       if (IsKeyPressed (KEY_TAB))
         {
-          if (cap_enough (&buffer, &buffer_capacity, chr_count + 5))
+          if (cap_enough (&buffer, &buffer_capacity, chr_count + 3))
             {
               for (int i = chr_count; i >= cursor_posi; i--)
                 {
                   buffer[i + 4] = buffer[i];
                 }
-              memcpy (&buffer[cursor_posi], "    ", 4);
+              memcpy (&buffer[cursor_posi], "  ", 2);
 
-              chr_count += 4;
-              cursor_posi += 4;
+              chr_count += 2;
+              cursor_posi += 2;
               buffer[chr_count] = '\0';
             }
         }
