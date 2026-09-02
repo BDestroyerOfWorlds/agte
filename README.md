@@ -21,7 +21,18 @@ This is undefined behavior so please be cautious on providing a valid file.
 
 ## Controls
 
-Arrow keys move around the cursor as expected. Page Up moves the cursor in the beginning of the file. Page Down moves the cursor to the end of the file. CTRL + S will save.
+Arrow keys move the cursor to their respective directions.
+
+Page Up moves the cursor to the beginning of the file.
+Page Down moves the cursor to the end of the file.
+
+CTRL + C copies the current line to the clipboard.
+CTRL + X cuts the current line to the clipboard.
+CTRL + V pastes the clipboard on the cursor's current location.
+
+CTRL + S saves the document.
+
+Tab indents 2 characters deep.
 
 In the current version there is no "save as" capability so make sure you always have a copy of the document.
 
