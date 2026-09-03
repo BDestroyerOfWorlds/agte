@@ -441,8 +441,7 @@ main (int argc, char *argv[])
 
       int caps_helper = GetKeyPressed ();
 
-      if (caps_helper
-          == KEY_CAPS_LOCK) // acts really fucking weird for some reason?
+      if (caps_helper == KEY_CAPS_LOCK) // probably not the best way?
         {
           caps = !caps;
         }
@@ -477,7 +476,7 @@ main (int argc, char *argv[])
           max_line_len = current_len;
         }
 
-      Rectangle panel = { 0, 0, 1280, 720 };
+      Rectangle panel = { 0, 0, 1200, 720 };
       Rectangle content
           = { 0, 0,
               fmaxf (panel.width, 32 + max_line_len * (char_width + 0.5F)),
