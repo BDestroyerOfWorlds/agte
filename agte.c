@@ -29,6 +29,14 @@
 #include <raylib.h>
 #include <stdio.h>
 
+#define NOT_SAVED "\U000F0F43"
+#define CHANGES "\U000F0CFB"
+#define SAVED "\U000F0193"
+#define CAPS "\U000F0A9B"
+
+#define BETTER_BLACK (Color){ 0x0A, 0x0C, 0x10, 255 }
+#define BETTER_WHITE (Color){ 0xF0, 0xF3, 0xF6, 255 }
+
 /*****************************************************************************/
 
 char *
@@ -146,11 +154,27 @@ main (int argc, char *argv[])
   InitWindow (1280, 720, "agte");
   SetTargetFPS (60);
 
+  const char *icons_available = "\U000F0F43"
+                                "\U000F0193"
+                                "\U000F0A9B";
+
+  int codepoint_count = 0; // just to flush
+
+  int *codepoints = LoadCodepoints (icons_available, &codepoint_count);
+
+  Font icons = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
+                                   LilexNerdFontMono_Regular_ttf_len, 64,
+                                   codepoints, codepoint_count);
+
+  UnloadCodepoints (codepoints);
+
   Font Lilex
       = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
                             LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
 
   float char_width = MeasureTextEx (Lilex, "WW", 20, 1).x / 2.0f;
+
+  bool caps = false;
 
   Vector2 scroll = { 0, 0 };
   Rectangle view;
@@ -415,9 +439,14 @@ main (int argc, char *argv[])
             }
         }
 
+      if (IsKeyPressed (KEY_CAPS_LOCK))
+        {
+          caps = !caps;
+        }
+
       //// CONTROLS SECTION
 
-      ClearBackground ((Color){ 0x0A, 0x0C, 0x10, 255 });
+      ClearBackground (BETTER_BLACK);
 
       int line_count = 1;
       int max_line_len = 0;
@@ -456,7 +485,7 @@ main (int argc, char *argv[])
       BeginScissorMode (view.x, view.y, view.width, view.height);
 
       DrawTextEx (Lilex, buffer, (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20,
-                  1, (Color){ 0xF0, 0xF3, 0xF6, 255 });
+                  1, BETTER_WHITE);
 
       float cursor_x = 32 + scroll.x + (cursor_col * (char_width + 0.5f));
       float cursor_y = 16 + scroll.y + (cursor_line * 22);
@@ -466,10 +495,20 @@ main (int argc, char *argv[])
 
       EndScissorMode ();
 
+      DrawLine (1200, 0, 1200, 708, BETTER_WHITE);
+
+      DrawTextEx (icons, NOT_SAVED, (Vector2){ 1225, 16 }, 64, 1, MAROON);
+
+      if (caps)
+        {
+          DrawTextEx (icons, CAPS, (Vector2){ 1224, 62 }, 64, 1, BETTER_WHITE);
+        }
+
       EndDrawing ();
     }
 
   UnloadFont (Lilex);
+  UnloadFont (icons);
   free (buffer);
   buffer = NULL;
   WindowShouldClose ();
