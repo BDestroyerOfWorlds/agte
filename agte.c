@@ -439,7 +439,10 @@ main (int argc, char *argv[])
             }
         }
 
-      if (IsKeyPressed (KEY_CAPS_LOCK))
+      int caps_helper = GetKeyPressed ();
+
+      if (caps_helper
+          == KEY_CAPS_LOCK) // acts really fucking weird for some reason?
         {
           caps = !caps;
         }
