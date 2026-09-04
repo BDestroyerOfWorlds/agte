@@ -204,10 +204,18 @@ main (int argc, char *argv[])
   Vector2 scroll = { 0, 0 };
   Rectangle view;
 
-  GuiSetStyle (DEFAULT, BACKGROUND_COLOR,
-               ColorToInt ((Color){ 0x0A, 0x0C, 0x10, 255 }));
-  GuiSetStyle (DEFAULT, LINE_COLOR,
-               ColorToInt ((Color){ 0xF0, 0xF3, 0xF6, 255 }));
+  GuiSetStyle (DEFAULT, BACKGROUND_COLOR, ColorToInt (BETTER_BLACK));
+  GuiSetStyle (DEFAULT, LINE_COLOR, ColorToInt (BETTER_WHITE));
+
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_NORMAL, ColorToInt (VIOLET));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_PRESSED, ColorToInt (VIOLET));
+
+  GuiSetStyle (BUTTON, BASE_COLOR_NORMAL, ColorToInt (PURPLE));
+
+  GuiSetStyle (SLIDER, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
+  GuiSetStyle (SLIDER, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
+  GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
 
   while (!WindowShouldClose ())
     {
@@ -518,7 +526,7 @@ main (int argc, char *argv[])
       Rectangle content
           = { 0, 0,
               fmaxf (panel.width, 32 + max_line_len * (char_width + 0.5F)),
-              (line_count * 22) + 22 };
+              fmaxf (707, (line_count * 22) + 22) };
 
       GuiScrollPanel (panel, NULL, content, &scroll, &view);
       BeginScissorMode (view.x, view.y, view.width, view.height);
@@ -529,8 +537,7 @@ main (int argc, char *argv[])
       float cursor_x = 32 + scroll.x + (cursor_col * (char_width + 0.5f));
       float cursor_y = 16 + scroll.y + (cursor_line * 22);
 
-      DrawRectangle (cursor_x, cursor_y, 2, 16,
-                     (Color){ 0xF0, 0xF3, 0xF6, 255 });
+      DrawRectangle (cursor_x, cursor_y, 2, 16, BETTER_WHITE);
 
       EndScissorMode ();
 
@@ -543,7 +550,9 @@ main (int argc, char *argv[])
 
       DrawLine (1200, 1, 1279, 1, DARKPURPLE);
       DrawLine (1279, 1, 1279, 719, DARKPURPLE);
-      DrawLine (1279, 719, 1200, 719, DARKPURPLE);
+      DrawLine (1200, 1, 1200, 719, DARKPURPLE);
+
+      DrawLine (1188, 1, 1188, 719, DARKPURPLE);
 
       DrawLine (1200, 707, 1, 707, DARKPURPLE);
 
@@ -564,7 +573,7 @@ main (int argc, char *argv[])
       else if (file_modified && file_exists)
         {
           saved_icon_text = CHANGES;
-          saved_icon_color = YELLOW;
+          saved_icon_color = ORANGE;
           saved_icon_size = 64;
         }
       else
