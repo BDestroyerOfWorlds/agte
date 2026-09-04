@@ -209,20 +209,6 @@ main (int argc, char *argv[])
   GuiSetStyle (DEFAULT, LINE_COLOR,
                ColorToInt ((Color){ 0xF0, 0xF3, 0xF6, 255 }));
 
-  // SCROLLBAR COLORS this just gets ignored and doesnt work at all for some
-  // reason???
-
-  GuiSetStyle (SCROLLBAR, BASE_COLOR_NORMAL, ColorToInt (DARKGRAY));
-  GuiSetStyle (SCROLLBAR, TEXT_COLOR_NORMAL, ColorToInt (VIOLET));
-  GuiSetStyle (SCROLLBAR, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
-
-  GuiSetStyle (SCROLLBAR, BASE_COLOR_FOCUSED, ColorToInt (VIOLET));
-  GuiSetStyle (SCROLLBAR, TEXT_COLOR_FOCUSED, ColorToInt (DARKPURPLE));
-
-  GuiSetStyle (SCROLLBAR, TEXT_COLOR_PRESSED, ColorToInt (PURPLE));
-
-  // SCROLLBAR COLORS
-
   while (!WindowShouldClose ())
     {
       BeginDrawing ();
@@ -536,25 +522,6 @@ main (int argc, char *argv[])
 
       GuiScrollPanel (panel, NULL, content, &scroll, &view);
       BeginScissorMode (view.x, view.y, view.width, view.height);
-
-      GuiSetStyle (DEFAULT, BACKGROUND_COLOR,
-                   ColorToInt ((Color){ 0x0A, 0x0C, 0x10, 255 }));
-      GuiSetStyle (DEFAULT, LINE_COLOR,
-                   ColorToInt ((Color){ 0xF0, 0xF3, 0xF6, 255 }));
-
-      // SCROLLBAR COLORS this just gets ignored and doesnt work at all for
-      // some reason???
-
-      GuiSetStyle (SCROLLBAR, BASE_COLOR_NORMAL, ColorToInt (DARKGRAY));
-      GuiSetStyle (SCROLLBAR, TEXT_COLOR_NORMAL, ColorToInt (VIOLET));
-      GuiSetStyle (SCROLLBAR, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
-
-      GuiSetStyle (SCROLLBAR, BASE_COLOR_FOCUSED, ColorToInt (VIOLET));
-      GuiSetStyle (SCROLLBAR, TEXT_COLOR_FOCUSED, ColorToInt (DARKPURPLE));
-
-      GuiSetStyle (SCROLLBAR, TEXT_COLOR_PRESSED, ColorToInt (PURPLE));
-
-      // SCROLLBAR COLORS
 
       DrawTextEx (Lilex, buffer, (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20,
                   1, BETTER_WHITE);
