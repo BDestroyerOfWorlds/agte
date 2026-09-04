@@ -29,7 +29,7 @@
 #include <raylib.h>
 #include <stdio.h>
 
-#define NOT_SAVED "\U000F0F43"
+#define NOT_SAVED "\U000F0F42"
 #define CHANGES "\U000F0CFB"
 #define SAVED "\U000F0193"
 #define CAPS "\U000F0A9B"
@@ -131,8 +131,34 @@ main (int argc, char *argv[])
   int chr_count = 0;
   char *path = argv[1];
 
-  buffer = load_file (path, &chr_count);
-  if (buffer == NULL)
+  bool file_exists = false;
+  bool file_modified = false;
+
+  if (FileExists (path))
+    {
+
+      buffer = load_file (path, &chr_count);
+      if (buffer == NULL)
+        {
+
+          buffer = malloc (1);
+          if (buffer == NULL)
+            {
+              printf ("FATAL ERROR: out of memory\n");
+              return -1;
+            }
+          buffer[0] = '\0';
+          buffer_capacity = 1;
+          chr_count = 0;
+        }
+      else
+        {
+          buffer_capacity = chr_count + 1;
+        }
+      file_exists = true;
+      file_modified = false;
+    }
+  else
     {
       buffer = malloc (1);
       if (buffer == NULL)
@@ -143,10 +169,8 @@ main (int argc, char *argv[])
       buffer[0] = '\0';
       buffer_capacity = 1;
       chr_count = 0;
-    }
-  else
-    {
-      buffer_capacity = chr_count + 1;
+      file_exists = false;
+      file_modified = false;
     }
 
   int cursor_posi = chr_count;
@@ -154,7 +178,8 @@ main (int argc, char *argv[])
   InitWindow (1280, 720, "agte");
   SetTargetFPS (60);
 
-  const char *icons_available = "\U000F0F43"
+  const char *icons_available = "\U000F0F42"
+                                "\U000F0CFB"
                                 "\U000F0193"
                                 "\U000F0A9B";
 
@@ -174,7 +199,7 @@ main (int argc, char *argv[])
 
   float char_width = MeasureTextEx (Lilex, "WW", 20, 1).x / 2.0f;
 
-  bool caps = false;
+  bool caps = false; // not a great idea, explained further down.
 
   Vector2 scroll = { 0, 0 };
   Rectangle view;
@@ -183,6 +208,20 @@ main (int argc, char *argv[])
                ColorToInt ((Color){ 0x0A, 0x0C, 0x10, 255 }));
   GuiSetStyle (DEFAULT, LINE_COLOR,
                ColorToInt ((Color){ 0xF0, 0xF3, 0xF6, 255 }));
+
+  // SCROLLBAR COLORS this just gets ignored and doesnt work at all for some
+  // reason???
+
+  GuiSetStyle (SCROLLBAR, BASE_COLOR_NORMAL, ColorToInt (DARKGRAY));
+  GuiSetStyle (SCROLLBAR, TEXT_COLOR_NORMAL, ColorToInt (VIOLET));
+  GuiSetStyle (SCROLLBAR, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
+
+  GuiSetStyle (SCROLLBAR, BASE_COLOR_FOCUSED, ColorToInt (VIOLET));
+  GuiSetStyle (SCROLLBAR, TEXT_COLOR_FOCUSED, ColorToInt (DARKPURPLE));
+
+  GuiSetStyle (SCROLLBAR, TEXT_COLOR_PRESSED, ColorToInt (PURPLE));
+
+  // SCROLLBAR COLORS
 
   while (!WindowShouldClose ())
     {
@@ -204,6 +243,7 @@ main (int argc, char *argv[])
                   chr_count++;
                   cursor_posi++;
                   buffer[chr_count] = '\0';
+                  file_modified = true;
                 }
             }
           key = GetCharPressed ();
@@ -222,6 +262,7 @@ main (int argc, char *argv[])
           chr_count--;
           cursor_posi--;
           buffer[chr_count] = '\0';
+          file_modified = true;
         }
 
       if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
@@ -235,6 +276,8 @@ main (int argc, char *argv[])
       if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
         {
           SaveFileText (path, buffer);
+          file_exists = true;
+          file_modified = false;
         }
 
       int cursor_line, cursor_col;
@@ -318,6 +361,7 @@ main (int argc, char *argv[])
               chr_count++;
               cursor_posi++;
               buffer[chr_count] = '\0';
+              file_modified = true;
             }
         }
       if (IsKeyPressed (KEY_PAGE_UP))
@@ -400,6 +444,7 @@ main (int argc, char *argv[])
           cursor_posi = cut_line_start;
 
           buffer[chr_count] = '\0';
+          file_modified = true;
         }
 
       if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
@@ -419,6 +464,7 @@ main (int argc, char *argv[])
                   chr_count += clipboard_len;
                   cursor_posi += clipboard_len;
                   buffer[chr_count] = '\0';
+                  file_modified = true;
                 }
             }
         }
@@ -429,19 +475,25 @@ main (int argc, char *argv[])
             {
               for (int i = chr_count; i >= cursor_posi; i--)
                 {
-                  buffer[i + 4] = buffer[i];
+                  buffer[i + 2] = buffer[i];
                 }
               memcpy (&buffer[cursor_posi], "  ", 2);
 
               chr_count += 2;
               cursor_posi += 2;
               buffer[chr_count] = '\0';
+              file_modified = true;
             }
         }
 
       int caps_helper = GetKeyPressed ();
 
-      if (caps_helper == KEY_CAPS_LOCK) // probably not the best way?
+      if (caps_helper
+          == KEY_CAPS_LOCK) /* this is a really bad solution becuase we have no
+                               idea if its on or off in the beginning and it
+                               defaults to off but a better solution kinda
+                               overcomplicates is for now so im sleeping on
+                               it */
         {
           caps = !caps;
         }
@@ -483,8 +535,26 @@ main (int argc, char *argv[])
               (line_count * 22) + 22 };
 
       GuiScrollPanel (panel, NULL, content, &scroll, &view);
-
       BeginScissorMode (view.x, view.y, view.width, view.height);
+
+      GuiSetStyle (DEFAULT, BACKGROUND_COLOR,
+                   ColorToInt ((Color){ 0x0A, 0x0C, 0x10, 255 }));
+      GuiSetStyle (DEFAULT, LINE_COLOR,
+                   ColorToInt ((Color){ 0xF0, 0xF3, 0xF6, 255 }));
+
+      // SCROLLBAR COLORS this just gets ignored and doesnt work at all for
+      // some reason???
+
+      GuiSetStyle (SCROLLBAR, BASE_COLOR_NORMAL, ColorToInt (DARKGRAY));
+      GuiSetStyle (SCROLLBAR, TEXT_COLOR_NORMAL, ColorToInt (VIOLET));
+      GuiSetStyle (SCROLLBAR, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
+
+      GuiSetStyle (SCROLLBAR, BASE_COLOR_FOCUSED, ColorToInt (VIOLET));
+      GuiSetStyle (SCROLLBAR, TEXT_COLOR_FOCUSED, ColorToInt (DARKPURPLE));
+
+      GuiSetStyle (SCROLLBAR, TEXT_COLOR_PRESSED, ColorToInt (PURPLE));
+
+      // SCROLLBAR COLORS
 
       DrawTextEx (Lilex, buffer, (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20,
                   1, BETTER_WHITE);
@@ -497,14 +567,53 @@ main (int argc, char *argv[])
 
       EndScissorMode ();
 
-      DrawLine (1200, 0, 1200, 708, BETTER_WHITE);
+      // Just drawing borders for a more polished look
 
-      DrawTextEx (icons, NOT_SAVED, (Vector2){ 1225, 16 }, 64, 1, MAROON);
+      DrawLine (1200, 0, 1200, 720, DARKPURPLE);
+      DrawLine (1, 1, 1200, 1, DARKPURPLE);
+      DrawLine (1, 1, 1, 708, DARKPURPLE);
+      DrawLine (1, 720, 1200, 720, DARKPURPLE);
+
+      DrawLine (1200, 1, 1279, 1, DARKPURPLE);
+      DrawLine (1279, 1, 1279, 719, DARKPURPLE);
+      DrawLine (1279, 719, 1200, 719, DARKPURPLE);
+
+      DrawLine (1200, 707, 1, 707, DARKPURPLE);
+
+      // End of Borders
+
+      // ICONS SECTION
+
+      Color saved_icon_color;
+      const char *saved_icon_text;
+
+      if (!file_modified && file_exists)
+        {
+          saved_icon_text = SAVED;
+          saved_icon_color = GREEN;
+        }
+      else if (file_modified && file_exists)
+        {
+          saved_icon_text = CHANGES;
+          saved_icon_color = YELLOW;
+        }
+      else
+        {
+          saved_icon_text = NOT_SAVED;
+          saved_icon_color = MAROON;
+        }
+
+      DrawTextEx (icons, saved_icon_text, (Vector2){ 1225, 16 }, 64, 1,
+                  saved_icon_color); /* icon placement needs its own helper
+                                        logic because they are slightly
+                                        different sizes so thats TODO */
 
       if (caps)
         {
-          DrawTextEx (icons, CAPS, (Vector2){ 1224, 62 }, 64, 1, BETTER_WHITE);
+          DrawTextEx (icons, CAPS, (Vector2){ 1223, 66 }, 64, 1, BETTER_WHITE);
         }
+
+      // ICONS SECTION
 
       EndDrawing ();
     }
