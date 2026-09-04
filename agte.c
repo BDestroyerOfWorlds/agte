@@ -586,24 +586,29 @@ main (int argc, char *argv[])
 
       Color saved_icon_color;
       const char *saved_icon_text;
+      int saved_icon_size;
 
       if (!file_modified && file_exists)
         {
           saved_icon_text = SAVED;
           saved_icon_color = GREEN;
+          saved_icon_size = 59;
         }
       else if (file_modified && file_exists)
         {
           saved_icon_text = CHANGES;
           saved_icon_color = YELLOW;
+          saved_icon_size = 64;
         }
       else
         {
           saved_icon_text = NOT_SAVED;
           saved_icon_color = MAROON;
+          saved_icon_size = 64;
         }
 
-      DrawTextEx (icons, saved_icon_text, (Vector2){ 1225, 16 }, 64, 1,
+      DrawTextEx (icons, saved_icon_text, (Vector2){ 1225, 16 },
+                  saved_icon_size, 1,
                   saved_icon_color); /* icon placement needs its own helper
                                         logic because they are slightly
                                         different sizes so thats TODO */
