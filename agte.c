@@ -116,8 +116,27 @@ get_cursor_coordinates (const char *buffer, int cursor_posi, int *out_line,
 
 /*****************************************************************************/
 
+void
+draw_editor_borders ()
+{
+  DrawLine (1200, 0, 1200, 720, DARKPURPLE);
+  DrawLine (1, 1, 1200, 1, DARKPURPLE);
+  DrawLine (1, 1, 1, 708, DARKPURPLE);
+  DrawLine (1, 720, 1200, 720, DARKPURPLE);
+
+  DrawLine (1200, 1, 1279, 1, DARKPURPLE);
+  DrawLine (1279, 1, 1279, 719, DARKPURPLE);
+  DrawLine (1200, 1, 1200, 719, DARKPURPLE);
+
+  DrawLine (1188, 1, 1188, 719, DARKPURPLE);
+
+  DrawLine (1200, 707, 1, 707, DARKPURPLE);
+}
+
+/*****************************************************************************/
+
 int
-main (int argc, char *argv[])
+main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
 {
 
   if (argc < 2)
@@ -541,22 +560,7 @@ main (int argc, char *argv[])
 
       EndScissorMode ();
 
-      // Just drawing borders for a more polished look
-
-      DrawLine (1200, 0, 1200, 720, DARKPURPLE);
-      DrawLine (1, 1, 1200, 1, DARKPURPLE);
-      DrawLine (1, 1, 1, 708, DARKPURPLE);
-      DrawLine (1, 720, 1200, 720, DARKPURPLE);
-
-      DrawLine (1200, 1, 1279, 1, DARKPURPLE);
-      DrawLine (1279, 1, 1279, 719, DARKPURPLE);
-      DrawLine (1200, 1, 1200, 719, DARKPURPLE);
-
-      DrawLine (1188, 1, 1188, 719, DARKPURPLE);
-
-      DrawLine (1200, 707, 1, 707, DARKPURPLE);
-
-      // End of Borders
+      draw_editor_borders ();
 
       // ICONS SECTION
 
