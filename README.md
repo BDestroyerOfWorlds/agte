@@ -15,6 +15,8 @@ agte filename.fileextension
 ```
 It will create the file in your current directory, or open it if the file already exists.
 
+Indicators located at the right panel will show if the file exists, if its up to date or not and if the Caps Lock is on or off.
+
 In the current version agte does not check if the file you are opening is a valid text format, if a folder is provided, it will act as normal but saving will be impossible.
 
 This is undefined behavior so please be cautious on providing a valid file.
