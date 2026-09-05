@@ -39,6 +39,14 @@
 
 /*****************************************************************************/
 
+typedef struct
+{
+  Font Lilex;
+  Font icons;
+} Fonts;
+
+/*****************************************************************************/
+
 char *
 load_file (const char *path, int *out_chr_cnt)
 {
@@ -152,6 +160,31 @@ set_style ()
   GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
 }
 
+Fonts
+fetch_fonts (void)
+{
+  Fonts f;
+
+  const char *icons_available = "\U000F0F42"
+                                "\U000F0CFB"
+                                "\U000F0193"
+                                "\U000F0A9B";
+
+  int codepoint_count = 0; // just to flush
+
+  int *codepoints = LoadCodepoints (icons_available, &codepoint_count);
+
+  f.icons = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
+                                LilexNerdFontMono_Regular_ttf_len, 64,
+                                codepoints, codepoint_count);
+
+  UnloadCodepoints (codepoints);
+
+  f.Lilex
+      = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
+                            LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
+  return f;
+}
 /*****************************************************************************/
 
 int
@@ -216,28 +249,12 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
   InitWindow (1280, 720, "agte");
   SetTargetFPS (60);
 
-  const char *icons_available = "\U000F0F42"
-                                "\U000F0CFB"
-                                "\U000F0193"
-                                "\U000F0A9B";
+  Fonts fonts = fetch_fonts ();
 
-  int codepoint_count = 0; // just to flush
+  float char_width = MeasureTextEx (fonts.Lilex, "WW", 20, 1).x / 2.0f;
 
-  int *codepoints = LoadCodepoints (icons_available, &codepoint_count);
-
-  Font icons = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
-                                   LilexNerdFontMono_Regular_ttf_len, 64,
-                                   codepoints, codepoint_count);
-
-  UnloadCodepoints (codepoints);
-
-  Font Lilex
-      = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
-                            LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
-
-  float char_width = MeasureTextEx (Lilex, "WW", 20, 1).x / 2.0f;
-
-  bool caps = false; // not a great idea, explained further down.
+  bool caps = false; // not a great idea, explained
+                     // further down.
 
   Vector2 scroll = { 0, 0 };
   Rectangle view;
@@ -509,12 +526,21 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
 
       int caps_helper = GetKeyPressed ();
 
-      if (caps_helper
-          == KEY_CAPS_LOCK) /* this is a really bad solution becuase
-                               we have no idea if its on or off in the
-                               beginning and it defaults to off but a
-                               better solution kinda overcomplicates
-                               is for now so im sleeping on it */
+      if (caps_helper == KEY_CAPS_LOCK) /* this is a
+                                           really bad
+                                           solution
+                                           becuase we have
+                                           no idea if its
+                                           on or off in
+                                           the beginning
+                                           and it defaults
+                                           to off but a
+                                           better solution
+                                           kinda
+                                           overcomplicates
+                                           is for now so
+                                           im sleeping on
+                                           it */
         {
           caps = !caps;
         }
@@ -558,8 +584,9 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
       GuiScrollPanel (panel, NULL, content, &scroll, &view);
       BeginScissorMode (view.x, view.y, view.width, view.height);
 
-      DrawTextEx (Lilex, buffer, (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20,
-                  1, BETTER_WHITE);
+      DrawTextEx (fonts.Lilex, buffer,
+                  (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20, 1,
+                  BETTER_WHITE);
 
       float cursor_x = 32 + scroll.x + (cursor_col * (char_width + 0.5f));
       float cursor_y = 16 + scroll.y + (cursor_line * 22);
@@ -595,15 +622,20 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
           saved_icon_size = 64;
         }
 
-      DrawTextEx (icons, saved_icon_text, (Vector2){ 1225, 16 },
-                  saved_icon_size, 1,
-                  saved_icon_color); /* icon placement needs its own helper
-                                        logic because they are slightly
-                                        different sizes so thats TODO */
+      DrawTextEx (fonts.icons, saved_icon_text, (Vector2){ 1225, 16 },
+                  saved_icon_size, 1, saved_icon_color); /* icon placement
+                                                            needs its own
+                                                            helper logic
+                                                            because they
+                                                            are slightly
+                                                            different
+                                                            sizes so thats
+                                                            TODO */
 
       if (caps)
         {
-          DrawTextEx (icons, CAPS, (Vector2){ 1223, 66 }, 64, 1, BETTER_WHITE);
+          DrawTextEx (fonts.icons, CAPS, (Vector2){ 1223, 66 }, 64, 1,
+                      BETTER_WHITE);
         }
 
       // ICONS SECTION
@@ -611,8 +643,8 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
       EndDrawing ();
     }
 
-  UnloadFont (Lilex);
-  UnloadFont (icons);
+  UnloadFont (fonts.Lilex);
+  UnloadFont (fonts.icons);
   free (buffer);
   buffer = NULL;
   WindowShouldClose ();
