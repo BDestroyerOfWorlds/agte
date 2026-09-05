@@ -197,6 +197,8 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
   if (argc < 2)
     {
       printf ("usage: agte <filename>\n");
+      /* BUT launching without arguements could launch a file explorer which im
+       * looking into building tbh. */
       return -1;
     }
 
@@ -268,7 +270,7 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
     {
       BeginDrawing ();
 
-      int key = GetCharPressed ();
+      int key = GetCharPressed (); // how actual letters are handled
       while (key > 0)
         {
           if ((key > 31) && (key < 126))
@@ -548,11 +550,11 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
           caps = !caps;
         }
 
-      //// CONTROLS SECTION
+      //// CONTROLS SECTION END
 
       ClearBackground (BETTER_BLACK);
 
-      int line_count = 1;
+      int line_count = 1; // calculated for content area, for scroll logic.
       int max_line_len = 0;
       int current_len = 0;
 
@@ -645,6 +647,9 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
 
       EndDrawing ();
     }
+
+  /* Cleanup section that will revieve its own helper after the struct system
+   * is implemented */
 
   UnloadFont (fonts.Lilex);
   UnloadFont (fonts.icons);
