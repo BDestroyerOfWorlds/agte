@@ -160,6 +160,8 @@ set_style ()
   GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
 }
 
+/*****************************************************************************/
+
 Fonts
 fetch_fonts (void)
 {
@@ -185,6 +187,7 @@ fetch_fonts (void)
                             LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
   return f;
 }
+
 /*****************************************************************************/
 
 int
