@@ -135,6 +135,23 @@ draw_editor_borders ()
 
 /*****************************************************************************/
 
+void
+set_style ()
+{
+  GuiSetStyle (DEFAULT, BACKGROUND_COLOR, ColorToInt (BETTER_BLACK));
+  GuiSetStyle (DEFAULT, LINE_COLOR, ColorToInt (BETTER_WHITE));
+
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_NORMAL, ColorToInt (VIOLET));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_PRESSED, ColorToInt (VIOLET));
+
+  GuiSetStyle (BUTTON, BASE_COLOR_NORMAL, ColorToInt (PURPLE));
+
+  GuiSetStyle (SLIDER, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
+  GuiSetStyle (SLIDER, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
+  GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
+}
+
 int
 main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
 {
@@ -223,18 +240,7 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
   Vector2 scroll = { 0, 0 };
   Rectangle view;
 
-  GuiSetStyle (DEFAULT, BACKGROUND_COLOR, ColorToInt (BETTER_BLACK));
-  GuiSetStyle (DEFAULT, LINE_COLOR, ColorToInt (BETTER_WHITE));
-
-  GuiSetStyle (LISTVIEW, BORDER_COLOR_NORMAL, ColorToInt (VIOLET));
-  GuiSetStyle (LISTVIEW, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
-  GuiSetStyle (LISTVIEW, BORDER_COLOR_PRESSED, ColorToInt (VIOLET));
-
-  GuiSetStyle (BUTTON, BASE_COLOR_NORMAL, ColorToInt (PURPLE));
-
-  GuiSetStyle (SLIDER, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
-  GuiSetStyle (SLIDER, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
-  GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
+  set_style ();
 
   while (!WindowShouldClose ())
     {
@@ -397,7 +403,7 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
           int copy_line_end = cursor_posi;
           while ((copy_line_end < chr_count) && buffer[copy_line_end] != '\n')
             {
-              copy_line_end--;
+              copy_line_end++;
             }
 
           int copy_len = copy_line_end - copy_line_start;
@@ -426,7 +432,7 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
           int cut_line_end = cursor_posi;
           while ((cut_line_end < chr_count) && buffer[cut_line_end] != '\n')
             {
-              cut_line_end--;
+              cut_line_end++;
             }
 
           int cut_len = cut_line_end - cut_line_start;
