@@ -180,7 +180,7 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
         {
 
           buffer = malloc (1);
-          if (buffer == NULL)
+          if (buffer == NULL) // git test comment
             {
               printf ("FATAL ERROR: out of memory\n");
               return -1;
