@@ -152,6 +152,8 @@ set_style ()
   GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
 }
 
+/*****************************************************************************/
+
 int
 main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
 {
