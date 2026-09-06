@@ -34,8 +34,12 @@
 #define SAVED "\U000F0193"
 #define CAPS "\U000F0A9B"
 
-#define BETTER_BLACK (Color){ 0x0A, 0x0C, 0x10, 255 }
-#define BETTER_WHITE (Color){ 0xF0, 0xF3, 0xF6, 255 }
+#define BETTER_BLACK (Color){ 0x11, 0x11, 0x1B, 255 }
+#define BETTER_WHITE (Color){ 0xF7, 0xF8, 0xFD, 255 }
+#define MAUVE (Color){ 0xCB, 0xA6, 0xF7, 255 }
+#define BETTER_BLUE (Color){ 0x89, 0xB4, 0xFA, 255 }
+#define BETTER_ORANGE (Color){ 0xFE, 0x64, 0x0B, 255 }
+#define BETTER_RED (Color){ 0xD2, 0x0F, 0x39, 255 }
 
 /*****************************************************************************/
 
@@ -127,18 +131,18 @@ get_cursor_coordinates (const char *buffer, int cursor_posi, int *out_line,
 void
 draw_editor_borders ()
 {
-  DrawLine (1200, 0, 1200, 720, DARKPURPLE);
-  DrawLine (1, 1, 1200, 1, DARKPURPLE);
-  DrawLine (1, 1, 1, 708, DARKPURPLE);
-  DrawLine (1, 720, 1200, 720, DARKPURPLE);
+  DrawLine (1200, 0, 1200, 720, MAUVE);
+  DrawLine (1, 1, 1200, 1, MAUVE);
+  DrawLine (1, 1, 1, 708, MAUVE);
+  DrawLine (1, 720, 1200, 720, MAUVE);
 
-  DrawLine (1200, 1, 1279, 1, DARKPURPLE);
-  DrawLine (1279, 1, 1279, 719, DARKPURPLE);
-  DrawLine (1200, 1, 1200, 719, DARKPURPLE);
+  DrawLine (1200, 1, 1279, 1, MAUVE);
+  DrawLine (1279, 1, 1279, 719, MAUVE);
+  DrawLine (1200, 1, 1200, 719, MAUVE);
 
-  DrawLine (1188, 1, 1188, 719, DARKPURPLE);
+  DrawLine (1188, 1, 1188, 719, MAUVE);
 
-  DrawLine (1200, 707, 1, 707, DARKPURPLE);
+  DrawLine (1200, 707, 1, 707, MAUVE);
 }
 
 /*****************************************************************************/
@@ -149,14 +153,14 @@ set_style ()
   GuiSetStyle (DEFAULT, BACKGROUND_COLOR, ColorToInt (BETTER_BLACK));
   GuiSetStyle (DEFAULT, LINE_COLOR, ColorToInt (BETTER_WHITE));
 
-  GuiSetStyle (LISTVIEW, BORDER_COLOR_NORMAL, ColorToInt (VIOLET));
-  GuiSetStyle (LISTVIEW, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
-  GuiSetStyle (LISTVIEW, BORDER_COLOR_PRESSED, ColorToInt (VIOLET));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_NORMAL, ColorToInt (BETTER_BLUE));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_FOCUSED, ColorToInt (BETTER_BLUE));
+  GuiSetStyle (LISTVIEW, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLUE));
 
-  GuiSetStyle (BUTTON, BASE_COLOR_NORMAL, ColorToInt (PURPLE));
+  GuiSetStyle (BUTTON, BASE_COLOR_NORMAL, ColorToInt (VIOLET));
 
-  GuiSetStyle (SLIDER, BORDER_COLOR_NORMAL, ColorToInt (DARKPURPLE));
-  GuiSetStyle (SLIDER, BORDER_COLOR_FOCUSED, ColorToInt (VIOLET));
+  GuiSetStyle (SLIDER, BORDER_COLOR_NORMAL, ColorToInt (MAUVE));
+  GuiSetStyle (SLIDER, BORDER_COLOR_FOCUSED, ColorToInt (BETTER_BLUE));
   GuiSetStyle (SLIDER, BORDER_COLOR_PRESSED, ColorToInt (BETTER_BLACK));
 }
 
@@ -190,8 +194,32 @@ fetch_fonts (void)
 
 /*****************************************************************************/
 
+typedef struct
+{
+  char *buffer;
+  size_t capacity;
+  int length;
+  int cursor_position;
+  bool modified;
+  bool file_exists;
+  char *file_path;
+} editor_state;
+
+/*****************************************************************************/
+
+void editor_init (editor_state *state, const char *path);
+
+void editor_handle_input (editor_state *state);
+
+void editor_render (editor_state *state, Fonts *fonts);
+
+void cleanup (editor_state);
+
+/*****************************************************************************/
+
 int
-main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
+main (int argc,
+      char *argv[]) // I need to refactor this whole thing tbh...
 {
 
   if (argc < 2)
@@ -611,19 +639,19 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
       if (!file_modified && file_exists)
         {
           saved_icon_text = SAVED;
-          saved_icon_color = GREEN;
+          saved_icon_color = BETTER_BLUE;
           saved_icon_size = 59;
         }
       else if (file_modified && file_exists)
         {
           saved_icon_text = CHANGES;
-          saved_icon_color = ORANGE;
+          saved_icon_color = BETTER_ORANGE;
           saved_icon_size = 64;
         }
       else
         {
           saved_icon_text = NOT_SAVED;
-          saved_icon_color = MAROON;
+          saved_icon_color = BETTER_RED;
           saved_icon_size = 64;
         }
 
@@ -640,7 +668,7 @@ main (int argc, char *argv[]) // I need to refactor this whole thing tbh...
       if (caps)
         {
           DrawTextEx (fonts.icons, CAPS, (Vector2){ 1223, 66 }, 64, 1,
-                      BETTER_WHITE);
+                      BETTER_BLUE);
         }
 
       // ICONS SECTION
