@@ -197,23 +197,473 @@ fetch_fonts (void)
 typedef struct
 {
   char *buffer;
-  size_t capacity;
+  size_t buffer_capacity;
   int length;
-  int cursor_position;
+  int cursor_posi;
   bool modified;
   bool file_exists;
-  char *file_path;
+  const char *file_path;
+  Vector2 scroll;
+  Rectangle view;
+  bool caps;
+  int cursor_line;
+  int cursor_col;
+  float char_width;
+
 } editor_state;
 
 /*****************************************************************************/
 
-void editor_init (editor_state *state, const char *path);
+/* its so fucking over */
 
-void editor_handle_input (editor_state *state);
+bool
+editor_init (editor_state *state, const char *path)
+{
+  state->file_path = path;
+  state->caps = false; // i will find a better solution sometime
+  state->scroll = (Vector2){ 0, 0 };
 
-void editor_render (editor_state *state, Fonts *fonts);
+  if (FileExists (path))
+    {
+      state->buffer = load_file (path, &state->length);
+      if (state->buffer == NULL)
+        {
 
-void cleanup (editor_state);
+          state->buffer = malloc (1);
+          if (state->buffer == NULL) // git test comment
+            {
+              printf ("FATAL ERROR: out of memory\n");
+              return false;
+            }
+          state->buffer[0] = '\0';
+          state->buffer_capacity = 1;
+          state->length = 0;
+        }
+      else
+        {
+          state->buffer_capacity = state->length + 1;
+        }
+      state->file_exists = true;
+      state->modified = false;
+    }
+  else
+    {
+      state->buffer = malloc (1);
+      if (state->buffer == NULL)
+        {
+          printf ("FATAL ERROR: out of memory\n");
+          return false;
+        }
+      state->buffer[0] = '\0';
+      state->buffer_capacity = 1;
+      state->length = 0;
+      state->file_exists = false;
+      state->modified = false;
+    }
+
+  state->cursor_posi = state->length;
+
+  return true;
+}
+
+/*****************************************************************************/
+
+void
+editor_handle_input (editor_state *state)
+{
+  int key = GetCharPressed (); // how actual letters are handled
+  while (key > 0)
+    {
+      if ((key > 31) && (key < 126))
+        {
+          if (cap_enough (&state->buffer, &state->buffer_capacity,
+                          state->length + 2))
+            {
+
+              for (int i = state->length; i > state->cursor_posi; i--)
+                {
+                  state->buffer[i] = state->buffer[i - 1];
+                }
+              state->buffer[state->cursor_posi] = (char)key;
+              state->length++;
+              state->cursor_posi++;
+              state->buffer[state->length] = '\0';
+              state->modified = true;
+            }
+        }
+      key = GetCharPressed ();
+    }
+
+  //// CONTROLS SECTION
+
+  if ((IsKeyPressed (KEY_BACKSPACE) || (IsKeyPressedRepeat (KEY_BACKSPACE)))
+      && state->cursor_posi > 0)
+
+    {
+      for (int i = state->cursor_posi; i < state->length; i++)
+        {
+          state->buffer[i - 1] = state->buffer[i];
+        }
+      state->length--;
+      state->cursor_posi--;
+      state->buffer[state->length] = '\0';
+      state->modified = true;
+    }
+
+  if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
+      && state->cursor_posi > 0)
+    state->cursor_posi--;
+
+  if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
+      && state->length > state->cursor_posi)
+    state->cursor_posi++;
+
+  if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
+    {
+      SaveFileText (state->file_path, state->buffer);
+      state->file_exists = true;
+      state->modified = false;
+    }
+
+  get_cursor_coordinates (state->buffer, state->cursor_posi,
+                          &state->cursor_line, &state->cursor_col);
+
+  if ((IsKeyPressed (KEY_UP) || IsKeyPressedRepeat (KEY_UP))
+      && state->cursor_line > 0)
+    {
+      int target_line = state->cursor_line - 1;
+      int line = 0;
+      int start = 0;
+      int length = 0;
+
+      for (int i = 0; i < state->length; i++)
+        {
+          if ((line == target_line) && ((state->buffer[i] == '\n')))
+            {
+              length = i - start;
+              break;
+            }
+          if (state->buffer[i] == '\n')
+            {
+              line++;
+              start = i + 1;
+            }
+        }
+      int new_col;
+      if (state->cursor_col < length)
+        new_col = state->cursor_col;
+      else
+        new_col = length;
+      state->cursor_posi = start + new_col;
+    }
+
+  if (IsKeyPressed (KEY_DOWN) || IsKeyPressedRepeat (KEY_DOWN))
+    {
+      int target_line = state->cursor_line + 1;
+      int line = 0;
+      int start = -1;
+      int length = 0;
+      bool line_present = false;
+      for (int i = 0; i < state->length; i++)
+        {
+          if ((line == target_line) && ((state->buffer[i] == '\n')))
+            {
+              length = i - start;
+              line_present = true;
+              break;
+            }
+          if (state->buffer[i] == '\n')
+            {
+              line++;
+              start = i + 1;
+            }
+        }
+      if (start != -1)
+        {
+          if (!line_present)
+            {
+              length = state->length - start;
+            }
+
+          int new_col;
+          if (state->cursor_col < length)
+            new_col = state->cursor_col;
+          else
+            new_col = length;
+          state->cursor_posi = start + new_col;
+        }
+    }
+
+  if (IsKeyPressed (KEY_ENTER) || (IsKeyPressedRepeat (KEY_ENTER)))
+    {
+      if (cap_enough (&state->buffer, &state->buffer_capacity,
+                      state->length + 2))
+        {
+          for (int i = state->length; i > state->cursor_posi; i--)
+            {
+              state->buffer[i] = state->buffer[i - 1];
+            }
+          state->buffer[state->cursor_posi] = '\n';
+          state->length++;
+          state->cursor_posi++;
+          state->buffer[state->length] = '\0';
+          state->modified = true;
+        }
+    }
+  if (IsKeyPressed (KEY_PAGE_UP))
+    {
+      state->cursor_posi = 0;
+    }
+  if (IsKeyPressed (KEY_PAGE_DOWN))
+    {
+      state->cursor_posi = state->length;
+    }
+
+  if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_C)))
+    {
+      int copy_line_start = state->cursor_posi;
+      while ((copy_line_start > 0)
+             && state->buffer[copy_line_start - 1] != '\n')
+        {
+          copy_line_start--;
+        }
+
+      int copy_line_end = state->cursor_posi;
+      while ((copy_line_end < state->length)
+             && state->buffer[copy_line_end] != '\n')
+        {
+          copy_line_end++;
+        }
+
+      int copy_len = copy_line_end - copy_line_start;
+
+      if (copy_len > 0)
+        {
+          char *copy_line = malloc (copy_len + 1);
+          if (copy_line)
+            {
+              memcpy (copy_line, &state->buffer[copy_line_start], copy_len);
+              copy_line[copy_len] = '\0';
+              SetClipboardText (copy_line);
+              free (copy_line);
+            }
+        }
+    }
+
+  if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_X)))
+    {
+      int cut_line_start = state->cursor_posi;
+      while ((cut_line_start > 0) && state->buffer[cut_line_start - 1] != '\n')
+        {
+          cut_line_start--;
+        }
+
+      int cut_line_end = state->cursor_posi;
+      while ((cut_line_end < state->length)
+             && state->buffer[cut_line_end] != '\n')
+        {
+          cut_line_end++;
+        }
+
+      int cut_len = cut_line_end - cut_line_start;
+
+      if (cut_len > 0)
+        {
+          char *cut_line = malloc (cut_len + 1);
+          if (cut_line)
+            {
+              memcpy (cut_line, &state->buffer[cut_line_start], cut_len);
+              cut_line[cut_len] = '\0';
+              SetClipboardText (cut_line);
+              free (cut_line);
+            }
+        }
+      int delete_len = cut_len;
+      if ((cut_line_end < state->length)
+          && state->buffer[cut_line_end] == '\n')
+        {
+          delete_len++;
+        }
+
+      for (int i = cut_line_start + delete_len; i <= state->length; i++)
+        {
+          state->buffer[i - delete_len] = state->buffer[i];
+        }
+
+      state->length -= delete_len;
+      state->cursor_posi = cut_line_start;
+
+      state->buffer[state->length] = '\0';
+      state->modified = true;
+    }
+
+  if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
+    {
+      const char *clipboard = GetClipboardText ();
+      if (clipboard && clipboard[0] != '\0')
+        {
+          int clipboard_len = strlen (clipboard);
+          if (cap_enough (&state->buffer, &state->buffer_capacity,
+                          state->length + clipboard_len + 1))
+            {
+              for (int i = state->length; i >= state->cursor_posi; i--)
+                {
+                  state->buffer[i + clipboard_len] = state->buffer[i];
+                }
+              memcpy (state->buffer + state->cursor_posi, clipboard,
+                      clipboard_len);
+              state->length += clipboard_len;
+              state->cursor_posi += clipboard_len;
+              state->buffer[state->length] = '\0';
+              state->modified = true;
+            }
+        }
+    }
+
+  if (IsKeyPressed (KEY_TAB))
+    {
+      if (cap_enough (&state->buffer, &state->buffer_capacity,
+                      state->length + 3))
+        {
+          for (int i = state->length; i >= state->cursor_posi; i--)
+            {
+              state->buffer[i + 2] = state->buffer[i];
+            }
+          memcpy (&state->buffer[state->cursor_posi], "  ", 2);
+
+          state->length += 2;
+          state->cursor_posi += 2;
+          state->buffer[state->length] = '\0';
+          state->modified = true;
+        }
+    }
+
+  int caps_helper = GetKeyPressed ();
+
+  if (caps_helper == KEY_CAPS_LOCK) /* this is a
+                                       really bad
+                                       solution
+                                       becuase we have
+                                       no idea if its
+                                       on or off in
+                                       the beginning
+                                       and it defaults
+                                       to off but a
+                                       better solution
+                                       kinda
+                                       overcomplicates
+                                       is for now so
+                                       im sleeping on
+                                       it */
+    {
+      state->caps = !state->caps;
+    }
+
+  //// CONTROLS SECTION END
+}
+
+/*****************************************************************************/
+
+void
+editor_render (editor_state *state, Fonts *fonts)
+{
+  ClearBackground (BETTER_BLACK);
+
+  int line_count = 1; // calculated for content area, for scroll logic.
+  int max_line_len = 0;
+  int current_len = 0;
+
+  for (int i = 0; i < state->length; i++)
+    {
+      if (state->buffer[i] == '\n')
+        {
+          line_count++;
+          if (current_len > max_line_len)
+            {
+              max_line_len = current_len;
+            }
+          current_len = 0;
+        }
+      else
+        {
+          current_len++;
+        }
+    }
+
+  if (current_len > max_line_len)
+    {
+      max_line_len = current_len;
+    }
+
+  Rectangle panel = { 0, 0, 1200, 720 };
+  Rectangle content
+      = { 0, 0,
+          fmaxf (panel.width, 32 + max_line_len * (state->char_width + 0.5F)),
+          fmaxf (707, (line_count * 22) + 22) };
+
+  GuiScrollPanel (panel, NULL, content, &state->scroll, &state->view);
+  BeginScissorMode (state->view.x, state->view.y, state->view.width,
+                    state->view.height);
+
+  DrawTextEx (fonts->Lilex, state->buffer,
+              (Vector2){ 32 + state->scroll.x, 16 + state->scroll.y }, 20, 1,
+              BETTER_WHITE);
+
+  float cursor_x = 32 + state->scroll.x
+                   + (state->cursor_col * (state->char_width + 0.5f));
+  float cursor_y = 16 + state->scroll.y + (state->cursor_line * 22);
+
+  DrawRectangle (cursor_x, cursor_y, 2, 16, BETTER_WHITE);
+
+  EndScissorMode ();
+
+  draw_editor_borders ();
+
+  // ICONS SECTION
+
+  Color saved_icon_color;
+  const char *saved_icon_text;
+  int saved_icon_size;
+
+  if (!state->modified && state->file_exists)
+    {
+      saved_icon_text = SAVED;
+      saved_icon_color = BETTER_BLUE;
+      saved_icon_size = 59;
+    }
+  else if (state->modified && state->file_exists)
+    {
+      saved_icon_text = CHANGES;
+      saved_icon_color = BETTER_ORANGE;
+      saved_icon_size = 64;
+    }
+  else
+    {
+      saved_icon_text = NOT_SAVED;
+      saved_icon_color = BETTER_RED;
+      saved_icon_size = 64;
+    }
+
+  DrawTextEx (fonts->icons, saved_icon_text, (Vector2){ 1225, 16 },
+              saved_icon_size, 1, saved_icon_color); /* icon placement
+                                                        needs its own
+                                                        helper logic
+                                                        because they
+                                                        are slightly
+                                                        different
+                                                        sizes so thats
+                                                        TODO */
+
+  if (state->caps)
+    {
+      DrawTextEx (fonts->icons, CAPS, (Vector2){ 1223, 66 }, 64, 1,
+                  BETTER_BLUE);
+    }
+}
+
+/*****************************************************************************/
+
+// ditched the cleanup helper for now.
 
 /*****************************************************************************/
 
@@ -225,72 +675,24 @@ main (int argc,
   if (argc < 2)
     {
       printf ("usage: agte <filename>\n");
-      /* BUT launching without arguements could launch a file explorer which im
-       * looking into building tbh. */
+      /* BUT launching without arguements could launch a file explorer which
+       * im looking into building tbh. */
       return -1;
     }
 
-  char *buffer = NULL;
-  size_t buffer_capacity = 0;
-  int chr_count = 0;
-  char *path = argv[1];
+  editor_state state;
 
-  bool file_exists = false;
-  bool file_modified = false;
-
-  if (FileExists (path))
+  if (editor_init (&state, argv[1]) == false)
     {
-
-      buffer = load_file (path, &chr_count);
-      if (buffer == NULL)
-        {
-
-          buffer = malloc (1);
-          if (buffer == NULL) // git test comment
-            {
-              printf ("FATAL ERROR: out of memory\n");
-              return -1;
-            }
-          buffer[0] = '\0';
-          buffer_capacity = 1;
-          chr_count = 0;
-        }
-      else
-        {
-          buffer_capacity = chr_count + 1;
-        }
-      file_exists = true;
-      file_modified = false;
+      return -1;
     }
-  else
-    {
-      buffer = malloc (1);
-      if (buffer == NULL)
-        {
-          printf ("FATAL ERROR: out of memory\n");
-          return -1;
-        }
-      buffer[0] = '\0';
-      buffer_capacity = 1;
-      chr_count = 0;
-      file_exists = false;
-      file_modified = false;
-    }
-
-  int cursor_posi = chr_count;
 
   InitWindow (1280, 720, "agte");
   SetTargetFPS (60);
 
   Fonts fonts = fetch_fonts ();
 
-  float char_width = MeasureTextEx (fonts.Lilex, "WW", 20, 1).x / 2.0f;
-
-  bool caps = false; // not a great idea, explained
-                     // further down.
-
-  Vector2 scroll = { 0, 0 };
-  Rectangle view;
+  state.char_width = MeasureTextEx (fonts.Lilex, "WW", 20, 1).x / 2.0f;
 
   set_style ();
 
@@ -298,391 +700,16 @@ main (int argc,
     {
       BeginDrawing ();
 
-      int key = GetCharPressed (); // how actual letters are handled
-      while (key > 0)
-        {
-          if ((key > 31) && (key < 126))
-            {
-              if (cap_enough (&buffer, &buffer_capacity, chr_count + 2))
-                {
-
-                  for (int i = chr_count; i > cursor_posi; i--)
-                    {
-                      buffer[i] = buffer[i - 1];
-                    }
-                  buffer[cursor_posi] = (char)key;
-                  chr_count++;
-                  cursor_posi++;
-                  buffer[chr_count] = '\0';
-                  file_modified = true;
-                }
-            }
-          key = GetCharPressed ();
-        }
-
-      //// CONTROLS SECTION
-
-      if ((IsKeyPressed (KEY_BACKSPACE)
-           || (IsKeyPressedRepeat (KEY_BACKSPACE)))
-          && cursor_posi > 0)
-        {
-          for (int i = cursor_posi; i < chr_count; i++)
-            {
-              buffer[i - 1] = buffer[i];
-            }
-          chr_count--;
-          cursor_posi--;
-          buffer[chr_count] = '\0';
-          file_modified = true;
-        }
-
-      if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
-          && cursor_posi > 0)
-        cursor_posi--;
-
-      if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
-          && chr_count > cursor_posi)
-        cursor_posi++;
-
-      if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
-        {
-          SaveFileText (path, buffer);
-          file_exists = true;
-          file_modified = false;
-        }
-
-      int cursor_line, cursor_col;
-      get_cursor_coordinates (buffer, cursor_posi, &cursor_line, &cursor_col);
-
-      if ((IsKeyPressed (KEY_UP) || IsKeyPressedRepeat (KEY_UP))
-          && cursor_line > 0)
-        {
-          int target_line = cursor_line - 1;
-          int line = 0;
-          int start = 0;
-          int length = 0;
-
-          for (int i = 0; i < chr_count; i++)
-            {
-              if ((line == target_line) && ((buffer[i] == '\n')))
-                {
-                  length = i - start;
-                  break;
-                }
-              if (buffer[i] == '\n')
-                {
-                  line++;
-                  start = i + 1;
-                }
-            }
-          int new_col;
-          if (cursor_col < length)
-            new_col = cursor_col;
-          else
-            new_col = length;
-          cursor_posi = start + new_col;
-        }
-
-      if (IsKeyPressed (KEY_DOWN) || IsKeyPressedRepeat (KEY_DOWN))
-        {
-          int target_line = cursor_line + 1;
-          int line = 0;
-          int start = -1;
-          int length = 0;
-          bool line_present = false;
-          for (int i = 0; i < chr_count; i++)
-            {
-              if ((line == target_line) && ((buffer[i] == '\n')))
-                {
-                  length = i - start;
-                  line_present = true;
-                  break;
-                }
-              if (buffer[i] == '\n')
-                {
-                  line++;
-                  start = i + 1;
-                }
-            }
-          if (start != -1)
-            {
-              if (!line_present)
-                {
-                  length = chr_count - start;
-                }
-
-              int new_col;
-              if (cursor_col < length)
-                new_col = cursor_col;
-              else
-                new_col = length;
-              cursor_posi = start + new_col;
-            }
-        }
-
-      if (IsKeyPressed (KEY_ENTER) || (IsKeyPressedRepeat (KEY_ENTER)))
-        {
-          if (cap_enough (&buffer, &buffer_capacity, chr_count + 2))
-            {
-              for (int i = chr_count; i > cursor_posi; i--)
-                {
-                  buffer[i] = buffer[i - 1];
-                }
-              buffer[cursor_posi] = '\n';
-              chr_count++;
-              cursor_posi++;
-              buffer[chr_count] = '\0';
-              file_modified = true;
-            }
-        }
-      if (IsKeyPressed (KEY_PAGE_UP))
-        {
-          cursor_posi = 0;
-        }
-      if (IsKeyPressed (KEY_PAGE_DOWN))
-        {
-          cursor_posi = chr_count;
-        }
-
-      if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_C)))
-        {
-          int copy_line_start = cursor_posi;
-          while ((copy_line_start > 0) && buffer[copy_line_start - 1] != '\n')
-            {
-              copy_line_start--;
-            }
-
-          int copy_line_end = cursor_posi;
-          while ((copy_line_end < chr_count) && buffer[copy_line_end] != '\n')
-            {
-              copy_line_end++;
-            }
-
-          int copy_len = copy_line_end - copy_line_start;
-
-          if (copy_len > 0)
-            {
-              char *copy_line = malloc (copy_len + 1);
-              if (copy_line)
-                {
-                  memcpy (copy_line, &buffer[copy_line_start], copy_len);
-                  copy_line[copy_len] = '\0';
-                  SetClipboardText (copy_line);
-                  free (copy_line);
-                }
-            }
-        }
-
-      if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_X)))
-        {
-          int cut_line_start = cursor_posi;
-          while ((cut_line_start > 0) && buffer[cut_line_start - 1] != '\n')
-            {
-              cut_line_start--;
-            }
-
-          int cut_line_end = cursor_posi;
-          while ((cut_line_end < chr_count) && buffer[cut_line_end] != '\n')
-            {
-              cut_line_end++;
-            }
-
-          int cut_len = cut_line_end - cut_line_start;
-
-          if (cut_len > 0)
-            {
-              char *cut_line = malloc (cut_len + 1);
-              if (cut_line)
-                {
-                  memcpy (cut_line, &buffer[cut_line_start], cut_len);
-                  cut_line[cut_len] = '\0';
-                  SetClipboardText (cut_line);
-                  free (cut_line);
-                }
-            }
-          int delete_len = cut_len;
-          if ((cut_line_end < chr_count) && buffer[cut_line_end] == '\n')
-            {
-              delete_len++;
-            }
-
-          for (int i = cut_line_start + delete_len; i <= chr_count; i++)
-            {
-              buffer[i - delete_len] = buffer[i];
-            }
-
-          chr_count -= delete_len;
-          cursor_posi = cut_line_start;
-
-          buffer[chr_count] = '\0';
-          file_modified = true;
-        }
-
-      if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
-        {
-          const char *clipboard = GetClipboardText ();
-          if (clipboard && clipboard[0] != '\0')
-            {
-              int clipboard_len = strlen (clipboard);
-              if (cap_enough (&buffer, &buffer_capacity,
-                              chr_count + clipboard_len + 1))
-                {
-                  for (int i = chr_count; i >= cursor_posi; i--)
-                    {
-                      buffer[i + clipboard_len] = buffer[i];
-                    }
-                  memcpy (buffer + cursor_posi, clipboard, clipboard_len);
-                  chr_count += clipboard_len;
-                  cursor_posi += clipboard_len;
-                  buffer[chr_count] = '\0';
-                  file_modified = true;
-                }
-            }
-        }
-
-      if (IsKeyPressed (KEY_TAB))
-        {
-          if (cap_enough (&buffer, &buffer_capacity, chr_count + 3))
-            {
-              for (int i = chr_count; i >= cursor_posi; i--)
-                {
-                  buffer[i + 2] = buffer[i];
-                }
-              memcpy (&buffer[cursor_posi], "  ", 2);
-
-              chr_count += 2;
-              cursor_posi += 2;
-              buffer[chr_count] = '\0';
-              file_modified = true;
-            }
-        }
-
-      int caps_helper = GetKeyPressed ();
-
-      if (caps_helper == KEY_CAPS_LOCK) /* this is a
-                                           really bad
-                                           solution
-                                           becuase we have
-                                           no idea if its
-                                           on or off in
-                                           the beginning
-                                           and it defaults
-                                           to off but a
-                                           better solution
-                                           kinda
-                                           overcomplicates
-                                           is for now so
-                                           im sleeping on
-                                           it */
-        {
-          caps = !caps;
-        }
-
-      //// CONTROLS SECTION END
-
-      ClearBackground (BETTER_BLACK);
-
-      int line_count = 1; // calculated for content area, for scroll logic.
-      int max_line_len = 0;
-      int current_len = 0;
-
-      for (int i = 0; i < chr_count; i++)
-        {
-          if (buffer[i] == '\n')
-            {
-              line_count++;
-              if (current_len > max_line_len)
-                {
-                  max_line_len = current_len;
-                }
-              current_len = 0;
-            }
-          else
-            {
-              current_len++;
-            }
-        }
-
-      if (current_len > max_line_len)
-        {
-          max_line_len = current_len;
-        }
-
-      Rectangle panel = { 0, 0, 1200, 720 };
-      Rectangle content
-          = { 0, 0,
-              fmaxf (panel.width, 32 + max_line_len * (char_width + 0.5F)),
-              fmaxf (707, (line_count * 22) + 22) };
-
-      GuiScrollPanel (panel, NULL, content, &scroll, &view);
-      BeginScissorMode (view.x, view.y, view.width, view.height);
-
-      DrawTextEx (fonts.Lilex, buffer,
-                  (Vector2){ 32 + scroll.x, 16 + scroll.y }, 20, 1,
-                  BETTER_WHITE);
-
-      float cursor_x = 32 + scroll.x + (cursor_col * (char_width + 0.5f));
-      float cursor_y = 16 + scroll.y + (cursor_line * 22);
-
-      DrawRectangle (cursor_x, cursor_y, 2, 16, BETTER_WHITE);
-
-      EndScissorMode ();
-
-      draw_editor_borders ();
-
-      // ICONS SECTION
-
-      Color saved_icon_color;
-      const char *saved_icon_text;
-      int saved_icon_size;
-
-      if (!file_modified && file_exists)
-        {
-          saved_icon_text = SAVED;
-          saved_icon_color = BETTER_BLUE;
-          saved_icon_size = 59;
-        }
-      else if (file_modified && file_exists)
-        {
-          saved_icon_text = CHANGES;
-          saved_icon_color = BETTER_ORANGE;
-          saved_icon_size = 64;
-        }
-      else
-        {
-          saved_icon_text = NOT_SAVED;
-          saved_icon_color = BETTER_RED;
-          saved_icon_size = 64;
-        }
-
-      DrawTextEx (fonts.icons, saved_icon_text, (Vector2){ 1225, 16 },
-                  saved_icon_size, 1, saved_icon_color); /* icon placement
-                                                            needs its own
-                                                            helper logic
-                                                            because they
-                                                            are slightly
-                                                            different
-                                                            sizes so thats
-                                                            TODO */
-
-      if (caps)
-        {
-          DrawTextEx (fonts.icons, CAPS, (Vector2){ 1223, 66 }, 64, 1,
-                      BETTER_BLUE);
-        }
-
-      // ICONS SECTION
+      editor_handle_input (&state);
+      editor_render (&state, &fonts);
 
       EndDrawing ();
     }
 
-  /* Cleanup section that will revieve its own helper after the struct system
-   * is implemented */
-
   UnloadFont (fonts.Lilex);
   UnloadFont (fonts.icons);
-  free (buffer);
-  buffer = NULL;
+  free (state.buffer);
+  state.buffer = NULL;
   WindowShouldClose ();
   CloseWindow ();
   return 0;
