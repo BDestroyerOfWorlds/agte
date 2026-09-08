@@ -490,7 +490,7 @@ editor_handle_input (editor_state *state)
         {
           copy_line_start
               = selection_start; // Its not exactly the "line" anymore but
-                                 // keeping the name for simplicity tbh.
+          // keeping the name for simplicity tbh.
           copy_len = selection_end - selection_start;
         }
       else
@@ -522,6 +522,13 @@ editor_handle_input (editor_state *state)
               SetClipboardText (copy_line);
               free (copy_line);
             }
+        }
+
+      if (selection_start
+          != selection_end) // you can just comment this out if you wanna keep
+        // your selected section after copying.
+        {
+          state->selection_anchor = state->cursor_posi;
         }
     }
 
@@ -574,6 +581,12 @@ editor_handle_input (editor_state *state)
 
   if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
     {
+
+      if (state->selection_anchor != state->cursor_posi)
+        {
+          state->selection_anchor = state->cursor_posi;
+        }
+
       const char *clipboard = GetClipboardText ();
       if (clipboard && clipboard[0] != '\0')
         {
@@ -622,20 +635,20 @@ editor_handle_input (editor_state *state)
   int caps_helper = GetKeyPressed ();
 
   if (caps_helper == KEY_CAPS_LOCK) /* this is a
-                                       really bad
-                                       solution
-                                       becuase we have
-                                       no idea if its
-                                       on or off in
-                                       the beginning
-                                       and it defaults
-                                       to off but a
-                                       better solution
-                                       kinda
-                                       overcomplicates
-                                       is for now so
-                                       im sleeping on
-                                       it */
+    really bad
+    solution
+    becuase we have
+    no idea if its
+    on or off in
+    the beginning
+    and it defaults
+    to off but a
+    better solution
+    kinda
+    overcomplicates
+    is for now so
+    im sleeping on
+    it */
     {
       state->caps = !state->caps;
     }
@@ -809,13 +822,13 @@ editor_render (editor_state *state, Fonts *fonts)
 
   DrawTextEx (fonts->icons, saved_icon_text, (Vector2){ 1225, 16 },
               saved_icon_size, 1, saved_icon_color); /* icon placement
-                                                        needs its own
-                                                        helper logic
-                                                        because they
-                                                        are slightly
-                                                        different
-                                                        sizes so thats
-                                                        TODO */
+              needs its own
+              helper logic
+              because they
+              are slightly
+              different
+              sizes so thats
+              TODO */
 
   if (state->caps)
     {
