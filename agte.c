@@ -209,12 +209,11 @@ typedef struct
   int cursor_line;
   int cursor_col;
   float char_width;
+  int selection_anchor;
 
 } editor_state;
 
 /*****************************************************************************/
-
-/* its so fucking over */
 
 bool
 editor_init (editor_state *state, const char *path)
@@ -262,6 +261,7 @@ editor_init (editor_state *state, const char *path)
     }
 
   state->cursor_posi = state->length;
+  state->selection_anchor = state->cursor_posi;
 
   return true;
 }
@@ -294,8 +294,6 @@ editor_handle_input (editor_state *state)
       key = GetCharPressed ();
     }
 
-  //// CONTROLS SECTION
-
   if ((IsKeyPressed (KEY_BACKSPACE) || (IsKeyPressedRepeat (KEY_BACKSPACE)))
       && state->cursor_posi > 0)
 
@@ -310,14 +308,6 @@ editor_handle_input (editor_state *state)
       state->modified = true;
     }
 
-  if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
-      && state->cursor_posi > 0)
-    state->cursor_posi--;
-
-  if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
-      && state->length > state->cursor_posi)
-    state->cursor_posi++;
-
   if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
     {
       SaveFileText (state->file_path, state->buffer);
@@ -325,11 +315,23 @@ editor_handle_input (editor_state *state)
       state->modified = false;
     }
 
+  if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
+      && !IsKeyDown (KEY_LEFT_SHIFT) && state->cursor_posi > 0)
+    {
+      state->cursor_posi--;
+      state->selection_anchor = state->cursor_posi;
+    }
+  if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
+      && !IsKeyDown (KEY_LEFT_SHIFT) && state->length > state->cursor_posi)
+    {
+      state->cursor_posi++;
+      state->selection_anchor = state->cursor_posi;
+    }
   get_cursor_coordinates (state->buffer, state->cursor_posi,
                           &state->cursor_line, &state->cursor_col);
 
   if ((IsKeyPressed (KEY_UP) || IsKeyPressedRepeat (KEY_UP))
-      && state->cursor_line > 0)
+      && !IsKeyDown (KEY_LEFT_SHIFT) && state->cursor_line > 0)
     {
       int target_line = state->cursor_line - 1;
       int line = 0;
@@ -355,9 +357,11 @@ editor_handle_input (editor_state *state)
       else
         new_col = length;
       state->cursor_posi = start + new_col;
+      state->selection_anchor = state->cursor_posi;
     }
 
-  if (IsKeyPressed (KEY_DOWN) || IsKeyPressedRepeat (KEY_DOWN))
+  if ((IsKeyPressed (KEY_DOWN) || IsKeyPressedRepeat (KEY_DOWN))
+      && !IsKeyDown (KEY_LEFT_SHIFT))
     {
       int target_line = state->cursor_line + 1;
       int line = 0;
@@ -391,6 +395,7 @@ editor_handle_input (editor_state *state)
           else
             new_col = length;
           state->cursor_posi = start + new_col;
+          state->selection_anchor = state->cursor_posi;
         }
     }
 
@@ -559,7 +564,89 @@ editor_handle_input (editor_state *state)
       state->caps = !state->caps;
     }
 
-  //// CONTROLS SECTION END
+  // SELECTION AREA MOVEMENT
+
+  if ((IsKeyDown (KEY_LEFT_SHIFT)
+       && (IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT)))
+      && state->cursor_posi > 0)
+    {
+      state->cursor_posi--;
+    }
+
+  if ((IsKeyDown (KEY_LEFT_SHIFT)
+       && (IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT)))
+      && state->length > state->cursor_posi)
+    {
+      state->cursor_posi++;
+    }
+
+  if (IsKeyDown (KEY_LEFT_SHIFT)
+      && ((IsKeyPressed (KEY_UP) || IsKeyPressedRepeat (KEY_UP)))
+      && state->cursor_line > 1)
+    {
+      int target_line = state->cursor_line - 1;
+      int line = 0;
+      int start = 0;
+      int length = 0;
+
+      for (int i = 0; i < state->length; i++)
+        {
+          if ((line == target_line) && ((state->buffer[i] == '\n')))
+            {
+              length = i - start;
+              break;
+            }
+          if (state->buffer[i] == '\n')
+            {
+              line++;
+              start = i + 1;
+            }
+        }
+      int new_col;
+      if (state->cursor_col < length)
+        new_col = state->cursor_col;
+      else
+        new_col = length;
+      state->cursor_posi = start + new_col;
+    }
+
+  if (IsKeyDown (KEY_LEFT_SHIFT)
+      && (IsKeyPressed (KEY_DOWN) || IsKeyPressedRepeat (KEY_DOWN)))
+    {
+      int target_line = state->cursor_line + 1;
+      int line = 0;
+      int start = -1;
+      int length = 0;
+      bool line_present = false;
+      for (int i = 0; i < state->length; i++)
+        {
+          if ((line == target_line) && ((state->buffer[i] == '\n')))
+            {
+              length = i - start;
+              line_present = true;
+              break;
+            }
+          if (state->buffer[i] == '\n')
+            {
+              line++;
+              start = i + 1;
+            }
+        }
+      if (start != -1)
+        {
+          if (!line_present)
+            {
+              length = state->length - start;
+            }
+
+          int new_col;
+          if (state->cursor_col < length)
+            new_col = state->cursor_col;
+          else
+            new_col = length;
+          state->cursor_posi = start + new_col;
+        }
+    }
 }
 
 /*****************************************************************************/
@@ -663,13 +750,8 @@ editor_render (editor_state *state, Fonts *fonts)
 
 /*****************************************************************************/
 
-// ditched the cleanup helper for now.
-
-/*****************************************************************************/
-
 int
-main (int argc,
-      char *argv[]) // I need to refactor this whole thing tbh...
+main (int argc, char *argv[])
 {
 
   if (argc < 2)
