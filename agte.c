@@ -40,6 +40,7 @@
 #define BETTER_BLUE (Color){ 0x89, 0xB4, 0xFA, 255 }
 #define BETTER_ORANGE (Color){ 0xFE, 0x64, 0x0B, 255 }
 #define BETTER_RED (Color){ 0xD2, 0x0F, 0x39, 255 }
+#define HIGHLIGHT (Color){ 0x89, 0xB4, 0xFA, 127 }
 
 /*****************************************************************************/
 
@@ -276,12 +277,6 @@ editor_handle_input (editor_state *state)
     {
       if ((key > 31) && (key < 126))
         {
-
-          if (state->selection_anchor != state->cursor_posi)
-            {
-              state->selection_anchor = state->cursor_posi;
-            }
-
           if (cap_enough (&state->buffer, &state->buffer_capacity,
                           state->length + 2))
             {
@@ -295,6 +290,8 @@ editor_handle_input (editor_state *state)
               state->cursor_posi++;
               state->buffer[state->length] = '\0';
               state->modified = true;
+
+              state->selection_anchor = state->cursor_posi;
             }
         }
       key = GetCharPressed ();
@@ -441,11 +438,6 @@ editor_handle_input (editor_state *state)
 
   if (IsKeyPressed (KEY_ENTER) || (IsKeyPressedRepeat (KEY_ENTER)))
     {
-      if (state->selection_anchor != state->cursor_posi)
-        {
-          state->selection_anchor = state->cursor_posi;
-        }
-
       if (cap_enough (&state->buffer, &state->buffer_capacity,
                       state->length + 2))
         {
@@ -459,6 +451,7 @@ editor_handle_input (editor_state *state)
           state->buffer[state->length] = '\0';
           state->modified = true;
         }
+      state->selection_anchor = state->cursor_posi;
     }
 
   if (IsKeyPressed (KEY_PAGE_UP))
@@ -615,11 +608,6 @@ editor_handle_input (editor_state *state)
   if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
     {
 
-      if (state->selection_anchor != state->cursor_posi)
-        {
-          state->selection_anchor = state->cursor_posi;
-        }
-
       const char *clipboard = GetClipboardText ();
       if (clipboard && clipboard[0] != '\0')
         {
@@ -639,15 +627,11 @@ editor_handle_input (editor_state *state)
               state->modified = true;
             }
         }
+      state->selection_anchor = state->cursor_posi;
     }
 
   if (IsKeyPressed (KEY_TAB))
     {
-
-      if (state->selection_anchor != state->cursor_posi)
-        {
-          state->selection_anchor = state->cursor_posi;
-        }
 
       if (cap_enough (&state->buffer, &state->buffer_capacity,
                       state->length + 3))
@@ -663,6 +647,7 @@ editor_handle_input (editor_state *state)
           state->buffer[state->length] = '\0';
           state->modified = true;
         }
+      state->selection_anchor = state->cursor_posi;
     }
 
   int caps_helper = GetKeyPressed ();
@@ -687,6 +672,15 @@ editor_handle_input (editor_state *state)
     }
 
   // SELECTION AREA MOVEMENT
+
+  if (IsKeyDown (KEY_LEFT_CONTROL)
+      && IsKeyPressed (KEY_A)) // this placement felt a lil more coherent.
+    {
+      state->selection_anchor = 0;
+      state->cursor_posi = state->length;
+      get_cursor_coordinates (state->buffer, state->cursor_posi,
+                              &state->cursor_line, &state->cursor_col);
+    }
 
   if ((IsKeyDown (KEY_LEFT_SHIFT)
        && (IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT)))
@@ -829,7 +823,53 @@ editor_render (editor_state *state, Fonts *fonts)
                    + (state->cursor_col * (state->char_width + 0.5f));
   float cursor_y = 16 + state->scroll.y + (state->cursor_line * 22);
 
-  DrawRectangle (cursor_x, cursor_y, 2, 16, BETTER_WHITE);
+  // DRAWING THE SELECTION HIGHLIGHT
+
+  int selection_start, selection_end;
+
+  if (state->selection_anchor != state->cursor_posi)
+    {
+      if (state->selection_anchor < state->cursor_posi)
+        {
+          selection_start = state->selection_anchor;
+          selection_end = state->cursor_posi;
+        }
+      else
+        {
+          selection_start = state->cursor_posi;
+          selection_end = state->selection_anchor;
+        }
+    }
+
+  int start_line, start_col, end_line, end_col;
+
+  get_cursor_coordinates (state->buffer, selection_start, &start_line,
+                          &start_col);
+
+  get_cursor_coordinates (state->buffer, selection_end, &end_line, &end_col);
+
+  float highligt_x1
+      = 32 + state->scroll.x + start_col * ((state->char_width) + 0.5f);
+
+  float highligt_y1 = 16 + state->scroll.y + start_line * 22;
+
+  float highligt_x2
+      = 32 + state->scroll.x + end_col * ((state->char_width) + 0.5f);
+
+  float highligt_y2 = 16 + state->scroll.y + end_line * 22;
+
+  DrawRectangle (highligt_x1, highligt_y1, highligt_x2 - highligt_x1,
+                 highligt_y2 - highligt_y1 + 22,
+                 HIGHLIGHT); // OMG I LOVE PULLING NUMBERS OUT MY ASS!!! X3 XD
+
+  /* the serious issue is because we are drawing the highlight as a single
+   * rectangle its really problematic when the selection zone is spread onto
+   * multiple lines and isnt perfectly rectangle shaped*/
+
+  // HIGHLIGHT END
+
+  DrawRectangle (cursor_x, cursor_y, 2, 16,
+                 BETTER_WHITE); /*this is the cursor*/
 
   EndScissorMode ();
 
