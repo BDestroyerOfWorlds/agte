@@ -460,13 +460,17 @@ editor_handle_input (editor_state *state)
           state->modified = true;
         }
     }
+
   if (IsKeyPressed (KEY_PAGE_UP))
     {
       state->cursor_posi = 0;
+      state->selection_anchor = state->cursor_posi;
     }
+
   if (IsKeyPressed (KEY_PAGE_DOWN))
     {
       state->cursor_posi = state->length;
+      state->selection_anchor = state->cursor_posi;
     }
 
   if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_C)))
@@ -534,20 +538,53 @@ editor_handle_input (editor_state *state)
 
   if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_X)))
     {
-      int cut_line_start = state->cursor_posi;
-      while ((cut_line_start > 0) && state->buffer[cut_line_start - 1] != '\n')
+
+      int selection_start, selection_end;
+
+      if (state->selection_anchor < state->cursor_posi)
         {
-          cut_line_start--;
+          selection_start = state->selection_anchor;
+          selection_end = state->cursor_posi;
+        }
+      else
+        {
+          selection_start = state->cursor_posi;
+          selection_end = state->selection_anchor;
         }
 
-      int cut_line_end = state->cursor_posi;
-      while ((cut_line_end < state->length)
-             && state->buffer[cut_line_end] != '\n')
-        {
-          cut_line_end++;
-        }
+      int cut_line_start, delete_len, cut_len;
 
-      int cut_len = cut_line_end - cut_line_start;
+      if (selection_start != selection_end)
+        {
+          cut_line_start = selection_start;
+          cut_len = selection_end - selection_start;
+          delete_len = cut_len;
+        }
+      else
+        {
+          cut_line_start = state->cursor_posi;
+          while ((cut_line_start > 0)
+                 && state->buffer[cut_line_start - 1] != '\n')
+            {
+              cut_line_start--;
+            }
+
+          int cut_line_end = state->cursor_posi;
+          while ((cut_line_end < state->length)
+                 && state->buffer[cut_line_end] != '\n')
+            {
+              cut_line_end++;
+            }
+
+          cut_len = cut_line_end - cut_line_start;
+
+          delete_len = cut_len;
+          if ((cut_line_end < state->length)
+              && state->buffer[cut_line_end] == '\n')
+            {
+              delete_len++;
+            }
+        }
 
       if (cut_len > 0)
         {
@@ -560,12 +597,6 @@ editor_handle_input (editor_state *state)
               free (cut_line);
             }
         }
-      int delete_len = cut_len;
-      if ((cut_line_end < state->length)
-          && state->buffer[cut_line_end] == '\n')
-        {
-          delete_len++;
-        }
 
       for (int i = cut_line_start + delete_len; i <= state->length; i++)
         {
@@ -574,6 +605,8 @@ editor_handle_input (editor_state *state)
 
       state->length -= delete_len;
       state->cursor_posi = cut_line_start;
+
+      state->selection_anchor = cut_line_start;
 
       state->buffer[state->length] = '\0';
       state->modified = true;
@@ -660,6 +693,8 @@ editor_handle_input (editor_state *state)
       && state->cursor_posi > 0)
     {
       state->cursor_posi--;
+      get_cursor_coordinates (state->buffer, state->cursor_posi,
+                              &state->cursor_line, &state->cursor_col);
     }
 
   if ((IsKeyDown (KEY_LEFT_SHIFT)
@@ -667,6 +702,8 @@ editor_handle_input (editor_state *state)
       && state->length > state->cursor_posi)
     {
       state->cursor_posi++;
+      get_cursor_coordinates (state->buffer, state->cursor_posi,
+                              &state->cursor_line, &state->cursor_col);
     }
 
   if (IsKeyDown (KEY_LEFT_SHIFT)
@@ -736,6 +773,9 @@ editor_handle_input (editor_state *state)
           state->cursor_posi = start + new_col;
         }
     }
+
+  get_cursor_coordinates (state->buffer, state->cursor_posi,
+                          &state->cursor_line, &state->cursor_col);
 }
 
 /*****************************************************************************/
