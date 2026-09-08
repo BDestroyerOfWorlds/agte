@@ -276,6 +276,12 @@ editor_handle_input (editor_state *state)
     {
       if ((key > 31) && (key < 126))
         {
+
+          if (state->selection_anchor != state->cursor_posi)
+            {
+              state->selection_anchor = state->cursor_posi;
+            }
+
           if (cap_enough (&state->buffer, &state->buffer_capacity,
                           state->length + 2))
             {
@@ -294,18 +300,52 @@ editor_handle_input (editor_state *state)
       key = GetCharPressed ();
     }
 
-  if ((IsKeyPressed (KEY_BACKSPACE) || (IsKeyPressedRepeat (KEY_BACKSPACE)))
-      && state->cursor_posi > 0)
+  if ((IsKeyPressed (KEY_BACKSPACE) || (IsKeyPressedRepeat (KEY_BACKSPACE))))
 
     {
-      for (int i = state->cursor_posi; i < state->length; i++)
+      int selection_start, selection_end;
+
+      if (state->selection_anchor < state->cursor_posi)
         {
-          state->buffer[i - 1] = state->buffer[i];
+          selection_start = state->selection_anchor;
+          selection_end = state->cursor_posi;
         }
-      state->length--;
-      state->cursor_posi--;
-      state->buffer[state->length] = '\0';
-      state->modified = true;
+      else
+        {
+          selection_start = state->cursor_posi;
+          selection_end = state->selection_anchor;
+        }
+
+      if (selection_start == selection_end)
+        {
+          if (state->cursor_posi > 0)
+            {
+
+              for (int i = state->cursor_posi; i < state->length; i++)
+                {
+                  state->buffer[i - 1] = state->buffer[i];
+                }
+              state->length--;
+              state->cursor_posi--;
+              state->selection_anchor = state->cursor_posi;
+              state->buffer[state->length] = '\0';
+              state->modified = true;
+            }
+        }
+      else
+        {
+          int delete_len = selection_end - selection_start;
+
+          for (int i = selection_end; i <= state->length; i++)
+            {
+              state->buffer[i - delete_len] = state->buffer[i];
+            }
+          state->length -= delete_len;
+          state->cursor_posi = selection_start;
+          state->selection_anchor = selection_start;
+          state->modified = true;
+          state->buffer[state->length] = '\0';
+        }
     }
 
   if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
@@ -401,6 +441,11 @@ editor_handle_input (editor_state *state)
 
   if (IsKeyPressed (KEY_ENTER) || (IsKeyPressedRepeat (KEY_ENTER)))
     {
+      if (state->selection_anchor != state->cursor_posi)
+        {
+          state->selection_anchor = state->cursor_posi;
+        }
+
       if (cap_enough (&state->buffer, &state->buffer_capacity,
                       state->length + 2))
         {
@@ -426,22 +471,47 @@ editor_handle_input (editor_state *state)
 
   if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_C)))
     {
-      int copy_line_start = state->cursor_posi;
-      while ((copy_line_start > 0)
-             && state->buffer[copy_line_start - 1] != '\n')
+      int selection_start, selection_end;
+
+      if (state->selection_anchor < state->cursor_posi)
         {
-          copy_line_start--;
+          selection_start = state->selection_anchor;
+          selection_end = state->cursor_posi;
+        }
+      else
+        {
+          selection_start = state->cursor_posi;
+          selection_end = state->selection_anchor;
         }
 
-      int copy_line_end = state->cursor_posi;
-      while ((copy_line_end < state->length)
-             && state->buffer[copy_line_end] != '\n')
+      int copy_line_start, copy_len;
+
+      if (selection_start != selection_end)
         {
-          copy_line_end++;
+          copy_line_start
+              = selection_start; // Its not exactly the "line" anymore but
+                                 // keeping the name for simplicity tbh.
+          copy_len = selection_end - selection_start;
         }
+      else
+        {
 
-      int copy_len = copy_line_end - copy_line_start;
+          copy_line_start = state->cursor_posi;
+          while ((copy_line_start > 0)
+                 && state->buffer[copy_line_start - 1] != '\n')
+            {
+              copy_line_start--;
+            }
 
+          int copy_line_end = state->cursor_posi;
+          while ((copy_line_end < state->length)
+                 && state->buffer[copy_line_end] != '\n')
+            {
+              copy_line_end++;
+            }
+
+          copy_len = copy_line_end - copy_line_start;
+        }
       if (copy_len > 0)
         {
           char *copy_line = malloc (copy_len + 1);
@@ -527,6 +597,12 @@ editor_handle_input (editor_state *state)
 
   if (IsKeyPressed (KEY_TAB))
     {
+
+      if (state->selection_anchor != state->cursor_posi)
+        {
+          state->selection_anchor = state->cursor_posi;
+        }
+
       if (cap_enough (&state->buffer, &state->buffer_capacity,
                       state->length + 3))
         {
@@ -582,7 +658,7 @@ editor_handle_input (editor_state *state)
 
   if (IsKeyDown (KEY_LEFT_SHIFT)
       && ((IsKeyPressed (KEY_UP) || IsKeyPressedRepeat (KEY_UP)))
-      && state->cursor_line > 1)
+      && state->cursor_line > 0)
     {
       int target_line = state->cursor_line - 1;
       int line = 0;
