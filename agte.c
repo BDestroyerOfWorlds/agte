@@ -40,7 +40,7 @@
 #define BETTER_BLUE (Color){ 0x89, 0xB4, 0xFA, 255 }
 #define BETTER_ORANGE (Color){ 0xFE, 0x64, 0x0B, 255 }
 #define BETTER_RED (Color){ 0xD2, 0x0F, 0x39, 255 }
-#define HIGHLIGHT (Color){ 0x89, 0xB4, 0xFA, 127 }
+#define HIGHLIGHT (Color){ 0x89, 0xB4, 0xFA, 95 }
 
 /*****************************************************************************/
 
@@ -839,33 +839,112 @@ editor_render (editor_state *state, Fonts *fonts)
           selection_start = state->cursor_posi;
           selection_end = state->selection_anchor;
         }
+
+      int start_line, start_col, end_line, end_col;
+
+      get_cursor_coordinates (state->buffer, selection_start, &start_line,
+                              &start_col);
+
+      get_cursor_coordinates (state->buffer, selection_end, &end_line,
+                              &end_col);
+
+      if (start_line == end_line)
+        {
+
+          float highligt_x1 = 32 + state->scroll.x
+                              + start_col * ((state->char_width) + 0.5f);
+
+          float highligt_y1 = 16 + state->scroll.y + start_line * 22;
+
+          float highligt_x2
+              = 32 + state->scroll.x + end_col * ((state->char_width) + 0.5f);
+
+          float highligt_y2 = 16 + state->scroll.y + end_line * 22;
+
+          DrawRectangle (
+              highligt_x1, highligt_y1, highligt_x2 - highligt_x1,
+              highligt_y2 - highligt_y1 + 22,
+              HIGHLIGHT); // OMG I LOVE PULLING NUMBERS OUT MY ASS!!! X3 XD
+        }
+      else
+        {
+          int first_line_start = 0;
+          int line_counter = 0;
+
+          for (int i = 0; i < state->length; i++)
+            {
+              if (state->buffer[i] == '\n')
+                {
+                  line_counter++;
+                  if (line_counter == start_line)
+                    {
+                      first_line_start = i + 1;
+                      break;
+                    }
+                }
+            }
+
+          int first_line_end = first_line_start;
+
+          while ((first_line_end < state->length)
+                 && (state->buffer[first_line_end] != '\n'))
+            {
+              first_line_end++;
+            }
+
+          int first_line_len = first_line_end - first_line_start;
+
+          float x1
+              = 32 + state->scroll.x + start_col * (state->char_width + 0.5f);
+          float y1 = 16 + state->scroll.y + start_line * 22;
+          float x2 = 32 + state->scroll.x
+                     + first_line_len * (state->char_width + 0.5f);
+
+          DrawRectangle (x1, y1, x2 - x1, 22, HIGHLIGHT);
+
+          for (int mid_line = start_line + 1; mid_line < end_line; mid_line++)
+            {
+              int mid_line_start = 0;
+              int temp_counter = 0;
+              for (int i = 0; i < state->length; i++)
+                {
+                  if (state->buffer[i] == '\n')
+                    {
+                      temp_counter++;
+                      if (temp_counter == mid_line)
+                        {
+                          mid_line_start = i + 1;
+                          break;
+                        }
+                    }
+                }
+
+              int mid_line_end = mid_line_start;
+
+              while ((mid_line_end < state->length)
+                     && (state->buffer[mid_line_end] != '\n'))
+                {
+                  mid_line_end++;
+                }
+
+              int mid_line_len = mid_line_end - mid_line_start;
+
+              float mid_x1 = 32 + state->scroll.x;
+              float mid_y1 = 16 + state->scroll.y + (mid_line * 22);
+              float mid_x2 = 32 + state->scroll.x
+                             + mid_line_len * (state->char_width + 0.5f);
+
+              DrawRectangle (mid_x1, mid_y1, mid_x2 - mid_x1, 22, HIGHLIGHT);
+            }
+
+          float last_x1 = 32 + state->scroll.x;
+          float last_y1 = 16 + state->scroll.y + end_line * 22;
+          float last_x2
+              = 32 + state->scroll.x + end_col * (state->char_width + 0.5f);
+
+          DrawRectangle (last_x1, last_y1, last_x2 - last_x1, 22, HIGHLIGHT);
+        }
     }
-
-  int start_line, start_col, end_line, end_col;
-
-  get_cursor_coordinates (state->buffer, selection_start, &start_line,
-                          &start_col);
-
-  get_cursor_coordinates (state->buffer, selection_end, &end_line, &end_col);
-
-  float highligt_x1
-      = 32 + state->scroll.x + start_col * ((state->char_width) + 0.5f);
-
-  float highligt_y1 = 16 + state->scroll.y + start_line * 22;
-
-  float highligt_x2
-      = 32 + state->scroll.x + end_col * ((state->char_width) + 0.5f);
-
-  float highligt_y2 = 16 + state->scroll.y + end_line * 22;
-
-  DrawRectangle (highligt_x1, highligt_y1, highligt_x2 - highligt_x1,
-                 highligt_y2 - highligt_y1 + 22,
-                 HIGHLIGHT); // OMG I LOVE PULLING NUMBERS OUT MY ASS!!! X3 XD
-
-  /* the serious issue is because we are drawing the highlight as a single
-   * rectangle its really problematic when the selection zone is spread onto
-   * multiple lines and isnt perfectly rectangle shaped*/
-
   // HIGHLIGHT END
 
   DrawRectangle (cursor_x, cursor_y, 2, 16,
