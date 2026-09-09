@@ -998,6 +998,36 @@ editor_render (editor_state *state, Fonts *fonts)
 
 /*****************************************************************************/
 
+/* couldnt get it just how i wanted so commenting it out, do whatever you want
+with it.
+
+void
+autoscroll (editor_state *state)
+{
+  float current_x
+      = 32 + state->scroll.x + state->cursor_col * (state->char_width + 0.5f);
+  float current_y = 16 + state->scroll.y + state->cursor_line * 22;
+
+  const float left = 32.0f;
+  const float top = 16.0f;
+  const float right = 1100.f;
+  const float bottom = 680.0f;
+
+  if (current_x < left)
+    state->scroll.x += left - current_x;
+  else if (current_x > right)
+    state->scroll.x -= current_x - right;
+
+  if (current_y < top)
+    state->scroll.y += top - current_y;
+  else if (current_y > bottom)
+    state->scroll.y -= current_y - bottom;
+}
+
+*/
+
+/*****************************************************************************/
+
 int
 main (int argc, char *argv[])
 {
