@@ -63,14 +63,13 @@ Are you willing to package agte for your package manager of choice? Let me know 
 [AGPL-3.0](https://choosealicense.com/licenses/agpl-3.0/)
 
 ## Known limitations of agte as a footnote
+* Window size is set at 1280x720.
+* No "valid format" check present.
+* No full UTF support has been implemented.
+* No "undo" and "redo" functions.
+* Although it is a standalone GUI program, it is still meant to be launched in the terminal.
+* Poor Caps Lock logic that only shows if the state has been changed, doesn't check the actual position. Kept that way to ensure OS Agnostic nature.
 
-> Window size is set at 1280x720.
-> No "valid format" check present.
-> No full UTF support has been implemented.
-> No "undo" and "redo" functions.
-> Although it is a standalone GUI program, it is still meant to be launched in the terminal.
-> Poor Caps Lock logic that only shows if the state has been changed, doesn't check the actual position. Kept that way to ensure OS Agnostic nature.
-
-These limitations are to be tackled in following versions along with a dedicated file explorer and a superior layout handling system, perhaps even a terminal emulator. Although lack of UTF-8 support is a great limitation for a text editor, it is a change that requires going back to the drawing board. The whole project needs an actual redesign to be quite honest, and I'm working on it. Decisions have to be made around the intended platforms so stuff like actually fetching the Caps Lock position and more become possible. Community feedback is extremely valuable and will be taken into account.
+> These limitations are to be tackled in following versions along with a dedicated file explorer and a superior layout handling system, perhaps even a terminal emulator. Although lack of UTF-8 support is a great limitation for a text editor, it is a change that requires going back to the drawing board. The whole project needs an actual redesign to be quite honest, and I'm working on it. Decisions have to be made around the intended platforms so stuff like actually fetching the Caps Lock position and more become possible. Community feedback is extremely valuable and will be taken into account.
 
 Do you have any ideas or would you like to help in any way? Please let me know via e-mail.
