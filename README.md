@@ -17,7 +17,7 @@ agte filename.fileextension
 
 It will create the file in your current directory, or open it if the file already exists.
 
-Indicators located at the right panel will show if the file exists, if its up to date or not and if the Caps Lock is active or not.
+Indicators located at the right panel will show if the file exists, if its up to date or not and if the Caps Lock is engaged or not.
 
 In the current version agte does not check if the file you are opening is a valid text format, if a folder is provided, it will act as normal but saving will be impossible.
 
@@ -69,7 +69,8 @@ Are you willing to package agte for your package manager of choice? Let me know 
 > No full UTF support has been implemented.
 > No "undo" and "redo" functions.
 > Although it is a standalone GUI program, it is still meant to be launched in the terminal.
+> Poor Caps Lock logic that only shows if the state has been changed, doesn't check the actual position. Kept that way to ensure OS Agnostic nature.
 
-These limitations are to be tackled in following versions along with a dedicated file explorer and a superior layout handling system, perhaps even a terminal emulator. Although lack of UTF-8 support is a great limitation for a text editor, it is a change that requires going back to the drawing board. The whole project needs an actual redesign to be quite honest, and I'm working on it.
+These limitations are to be tackled in following versions along with a dedicated file explorer and a superior layout handling system, perhaps even a terminal emulator. Although lack of UTF-8 support is a great limitation for a text editor, it is a change that requires going back to the drawing board. The whole project needs an actual redesign to be quite honest, and I'm working on it. Decisions have to be made around the intended platforms so stuff like actually fetching the Caps Lock position and more become possible. Community feedback is extremely valuable and will be taken into account.
 
 Do you have any ideas or would you like to help in any way? Please let me know via e-mail.
