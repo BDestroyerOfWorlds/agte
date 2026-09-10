@@ -23,6 +23,8 @@ In the current version agte does not check if the file you are opening is a vali
 
 This is undefined behavior so please be cautious on providing a valid file.
 
+<img width="1443" height="918" alt="image" src="https://github.com/user-attachments/assets/05b00403-0b92-4b5d-a820-42a158e8101e" />
+
 ## Controls
 
 Arrow keys move the cursor to their respective directions.
@@ -62,7 +64,8 @@ Are you willing to package agte for your package manager of choice? Let me know 
 
 [AGPL-3.0](https://choosealicense.com/licenses/agpl-3.0/)
 
-## Known limitations of agte as a footnote
+## footnote
+Known limitations are:
 * Window size is set at 1280x720.
 * No "valid format" check present.
 * No full UTF support has been implemented.
@@ -71,5 +74,7 @@ Are you willing to package agte for your package manager of choice? Let me know 
 * Poor Caps Lock logic that only shows if the state has been changed, doesn't check the actual position. Kept that way to ensure OS Agnostic nature.
 
 > These limitations are to be tackled in following versions along with a dedicated file explorer and a superior layout handling system, perhaps even a terminal emulator. Although lack of UTF-8 support is a great limitation for a text editor, it is a change that requires going back to the drawing board. The whole project needs an actual redesign to be quite honest, and I'm working on it. Decisions have to be made around the intended platforms so stuff like actually fetching the Caps Lock position and more become possible. Community feedback is extremely valuable and will be taken into account.
+
+raylib source code is NOT distributed along the program, it is baked into the binary statically.
 
 Do you have any ideas or would you like to help in any way? Please let me know via e-mail.
