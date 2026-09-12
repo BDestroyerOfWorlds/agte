@@ -132,18 +132,23 @@ get_cursor_coordinates (const char *buffer, int cursor_posi, int *out_line,
 void
 draw_editor_borders ()
 {
-  DrawLine (1200, 0, 1200, 720, MAUVE);
-  DrawLine (1, 1, 1200, 1, MAUVE);
+  DrawLine (GetScreenWidth () - 128, GetScreenHeight (), GetScreenWidth (),
+            GetScreenHeight (), MAUVE);
+  DrawLine (1, 1, GetScreenWidth () - 128, 1, MAUVE);
   DrawLine (1, 1, 1, 708, MAUVE);
-  DrawLine (1, 720, 1200, 720, MAUVE);
+  DrawLine (1, GetScreenHeight (), 1200, GetScreenHeight (), MAUVE);
 
-  DrawLine (1200, 1, 1279, 1, MAUVE);
-  DrawLine (1279, 1, 1279, 719, MAUVE);
-  DrawLine (1200, 1, 1200, 719, MAUVE);
+  DrawLine (GetScreenWidth () - 128, 1, GetScreenWidth (), 1, MAUVE);
+  DrawLine (GetScreenWidth (), 1, GetScreenWidth (), GetScreenHeight (),
+            MAUVE);
+  DrawLine (GetScreenWidth () - 128, 1, GetScreenWidth () - 128,
+            GetScreenHeight (), MAUVE);
 
-  DrawLine (1188, 1, 1188, 719, MAUVE);
+  DrawLine (GetScreenWidth () - 140, 1, GetScreenWidth () - 140,
+            GetScreenHeight (), MAUVE);
 
-  DrawLine (1200, 707, 1, 707, MAUVE);
+  DrawLine (GetScreenWidth () - 128, GetScreenHeight () - 13, 1,
+            GetScreenHeight () - 13, MAUVE);
 }
 
 /*****************************************************************************/
@@ -182,7 +187,7 @@ fetch_fonts (void)
   int *codepoints = LoadCodepoints (icons_available, &codepoint_count);
 
   f.icons = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
-                                LilexNerdFontMono_Regular_ttf_len, 64,
+                                LilexNerdFontMono_Regular_ttf_len, 80,
                                 codepoints, codepoint_count);
 
   UnloadCodepoints (codepoints);
@@ -805,11 +810,14 @@ editor_render (editor_state *state, Fonts *fonts)
       max_line_len = current_len;
     }
 
-  Rectangle panel = { 0, 0, 1200, 720 };
+  int screen_width = GetScreenWidth ();
+  int screen_height = GetScreenHeight ();
+
+  Rectangle panel = { 0, 0, screen_width - 128, screen_height };
   Rectangle content
       = { 0, 0,
           fmaxf (panel.width, 32 + max_line_len * (state->char_width + 0.5F)),
-          fmaxf (707, (line_count * 22) + 22) };
+          fmaxf (screen_height - 13, (line_count * 22) + 22) };
 
   GuiScrollPanel (panel, NULL, content, &state->scroll, &state->view);
   BeginScissorMode (state->view.x, state->view.y, state->view.width,
@@ -964,35 +972,36 @@ editor_render (editor_state *state, Fonts *fonts)
     {
       saved_icon_text = SAVED;
       saved_icon_color = BETTER_BLUE;
-      saved_icon_size = 59;
+      saved_icon_size = 80;
     }
   else if (state->modified && state->file_exists)
     {
       saved_icon_text = CHANGES;
       saved_icon_color = BETTER_ORANGE;
-      saved_icon_size = 64;
+      saved_icon_size = 80;
     }
   else
     {
       saved_icon_text = NOT_SAVED;
       saved_icon_color = BETTER_RED;
-      saved_icon_size = 64;
+      saved_icon_size = 80;
     }
 
-  DrawTextEx (fonts->icons, saved_icon_text, (Vector2){ 1225, 16 },
-              saved_icon_size, 1, saved_icon_color); /* icon placement
-              needs its own
-              helper logic
-              because they
-              are slightly
-              different
-              sizes so thats
-              TODO */
+  DrawTextEx (fonts->icons, saved_icon_text,
+              (Vector2){ screen_width - 84, 32 }, saved_icon_size, 1,
+              saved_icon_color); /* icon placement
+needs its own
+helper logic
+because they
+are slightly
+different
+sizes so thats
+TODO */
 
   if (state->caps)
     {
-      DrawTextEx (fonts->icons, CAPS, (Vector2){ 1223, 66 }, 64, 1,
-                  BETTER_BLUE);
+      DrawTextEx (fonts->icons, CAPS, (Vector2){ screen_width - 84, 96 }, 80,
+                  1, BETTER_BLUE);
     }
 }
 
@@ -1046,6 +1055,8 @@ main (int argc, char *argv[])
     {
       return -1;
     }
+
+  SetConfigFlags (FLAG_WINDOW_RESIZABLE);
 
   InitWindow (1280, 720, "agte");
   SetTargetFPS (60);
