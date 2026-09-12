@@ -135,8 +135,9 @@ draw_editor_borders ()
   DrawLine (GetScreenWidth () - 128, GetScreenHeight (), GetScreenWidth (),
             GetScreenHeight (), MAUVE);
   DrawLine (1, 1, GetScreenWidth () - 128, 1, MAUVE);
-  DrawLine (1, 1, 1, 708, MAUVE);
-  DrawLine (1, GetScreenHeight (), 1200, GetScreenHeight (), MAUVE);
+  DrawLine (1, 1, 1, GetScreenHeight () - 13, MAUVE);
+  DrawLine (1, GetScreenHeight (), GetScreenWidth () - 128, GetScreenHeight (),
+            MAUVE);
 
   DrawLine (GetScreenWidth () - 128, 1, GetScreenWidth (), 1, MAUVE);
   DrawLine (GetScreenWidth (), 1, GetScreenWidth (), GetScreenHeight (),
