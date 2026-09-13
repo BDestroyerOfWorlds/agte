@@ -1004,6 +1004,11 @@ TODO */
       DrawTextEx (fonts->icons, CAPS, (Vector2){ screen_width - 84, 96 }, 80,
                   1, BETTER_BLUE);
     }
+
+  DrawTextEx (fonts->Lilex,
+              TextFormat ("%d:%d", state->cursor_line, state->cursor_col),
+              (Vector2){ screen_width - 96, screen_height - 52 }, 20, 1,
+              BETTER_BLUE); // just added a little counter on the bottom right.
 }
 
 /*****************************************************************************/
