@@ -817,8 +817,10 @@ editor_render (editor_state *state, Fonts *fonts)
   Rectangle panel = { 0, 0, screen_width - 128, screen_height };
   Rectangle content
       = { 0, 0,
-          fmaxf (panel.width, 32 + max_line_len * (state->char_width + 0.5F)),
-          fmaxf (screen_height - 13, (line_count * 22) + 22) };
+          fmaxf (panel.width, ((screen_width / 4) + 32
+                               + max_line_len * (state->char_width + 0.5F))),
+          fmaxf (screen_height - 13,
+                 (line_count * 22) + (screen_height / 4)) };
 
   GuiScrollPanel (panel, NULL, content, &state->scroll, &state->view);
   BeginScissorMode (state->view.x, state->view.y, state->view.width,
