@@ -236,7 +236,7 @@ editor_init (editor_state *state, const char *path)
         {
 
           state->buffer = malloc (1);
-          if (state->buffer == NULL) // git test comment
+          if (state->buffer == NULL)
             {
               printf ("FATAL ERROR: out of memory\n");
               return false;
