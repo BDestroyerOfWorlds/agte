@@ -25,8 +25,6 @@ In the current version agte does not check if the file you are opening is a vali
 
 This is undefined behavior so please be cautious on providing a valid file.
 
-<img width="1443" height="918" alt="image" src="https://github.com/user-attachments/assets/05b00403-0b92-4b5d-a820-42a158e8101e" />
-
 ## Controls
 
 Arrow keys move the cursor to their respective directions.
