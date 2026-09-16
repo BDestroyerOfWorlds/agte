@@ -66,7 +66,6 @@ Are you willing to package agte for your package manager of choice? Let me know 
 
 ## footnote
 Known limitations are:
-* Window size is set at 1280x720.
 * No "valid format" check present.
 * No full UTF support has been implemented.
 * No "undo" and "redo" functions.
