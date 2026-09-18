@@ -1,6 +1,6 @@
 # agte
 
-agte (A Graphical Text Editor) is meant to be an alternative to nano. It's written in C and meant to be as light and portable as possible.
+agte (A Graphical Text Editor) is meant to be an alternative to minimal text editors such as nano. It's written in C and meant to be as light and portable as possible.
 
 <img width="2083" height="1186" alt="agtess" src="https://github.com/user-attachments/assets/222a1b6e-51b2-4a9d-bb5a-61f5d60a67c4" />
 
