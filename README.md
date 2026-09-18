@@ -48,7 +48,7 @@ Tab indents 2 characters deep.
 
 ## Compilation
 
-After installing dependencies by following [raylib's docs] (https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux), you can use the provided Makefile.
+After installing dependencies by following [raylib's docs](https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux), you can use the provided Makefile.
 
 ## Contributing
 
