@@ -281,7 +281,7 @@ editor_handle_input (editor_state *state)
   int key = GetCharPressed (); // how actual letters are handled
   while (key > 0)
     {
-      if ((key > 31) && (key < 126))
+      if ((key > 31) && (key < 127))
         {
           if (cap_enough (&state->buffer, &state->buffer_capacity,
                           state->length + 2))
