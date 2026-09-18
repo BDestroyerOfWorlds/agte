@@ -48,11 +48,7 @@ Tab indents 2 characters deep.
 
 ## Compilation
 
-```bash
--I. libraylib.a -lGL -lm -lpthread -ldl -lrt -lX11
-```
-
-I compile agte with the shown flags, I do not distribute raylib, so please generate your own libraylib.a file if you wish to make your own portable binary with links or package it for your format of choice.
+After installing dependencies by following [raylib's docs] (https://github.com/raysan5/raylib/wiki/Working-on-GNU-Linux), you can use the provided Makefile.
 
 ## Contributing
 
@@ -74,6 +70,6 @@ Known limitations are:
 
 > These limitations are to be tackled in following versions along with a dedicated file explorer and a superior layout handling system, perhaps even a terminal emulator. Although lack of UTF-8 support is a great limitation for a text editor, it is a change that requires going back to the drawing board. The whole project needs an actual redesign to be quite honest, and I'm working on it. Decisions have to be made around the intended platforms so stuff like actually fetching the Caps Lock position and more become possible. Community feedback is extremely valuable and will be taken into account.
 
-raylib source code is NOT distributed along the program, it is baked into the binary statically.
+raylib source code is not distributed along the compiled binaries, it is baked into the binary statically. Please use the source code if needed.
 
 Do you have any ideas or would you like to help in any way? Please let me know via e-mail.
