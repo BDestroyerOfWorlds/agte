@@ -105,6 +105,41 @@ cap_enough (char **buffer, size_t *current_cap, size_t needed_cap)
 
 /*****************************************************************************/
 
+bool
+middle_byte (int byte)
+{
+  return ((byte & 0xC0) == 0x80);
+}
+
+int
+prev_char_start (const char *buffer, int posi)
+{
+  if (posi == 0)
+    return 0;
+
+  int temp_posi = posi - 1;
+  while (middle_byte (buffer[temp_posi]) && (temp_posi > 0))
+    {
+      temp_posi--;
+    }
+  return temp_posi;
+}
+
+int
+next_char_start (const char *buffer, int posi, int length)
+{
+  if (posi >= length)
+    return length;
+  int temp_posi = posi + 1;
+  while (middle_byte (buffer[temp_posi]) && (temp_posi < length))
+    {
+      temp_posi++;
+    }
+  return temp_posi;
+}
+
+/*****************************************************************************/
+
 void
 get_cursor_coordinates (const char *buffer, int cursor_posi, int *out_line,
                         int *out_col)
@@ -118,7 +153,7 @@ get_cursor_coordinates (const char *buffer, int cursor_posi, int *out_line,
           line++;
           col = 0;
         }
-      else
+      else if ((buffer[i] & 0xC0) != 0x80)
         {
           col++;
         }
@@ -173,6 +208,42 @@ set_style ()
 
 /*****************************************************************************/
 
+static const int text_ranges[][2] = {
+  { 0x0020, 0x007E }, /* Latin */
+  { 0x00A0, 0x00AC },
+  { 0x00AE, 0x017F }, /* Latin-1, Extended-A thanks for making me have to split
+                         this fucking soft hyphen*/
+  { 0x01A0, 0x01A1 }, /* Ơ ơ */
+  { 0x01AF, 0x01B0 }, /* Ư ư */
+  { 0x0218, 0x021B }, /* Ș ș Ț ț */
+  { 0x1EA0, 0x1EF9 }, /* Vietnamese stuff */
+};
+
+#define TEXT_RANGE_COUNT (sizeof (text_ranges) / sizeof (text_ranges[0]))
+
+int *
+build_text_codepoints (int *out_count)
+{
+  int total = 0;
+  for (size_t i = 0; i < TEXT_RANGE_COUNT; i++)
+    total += text_ranges[i][1] - text_ranges[i][0] + 1;
+
+  int *codepoints = malloc (total * sizeof (int));
+  if (codepoints == NULL)
+    {
+      *out_count = 0;
+      return NULL;
+    }
+
+  int j = 0;
+  for (size_t i = 0; i < TEXT_RANGE_COUNT; i++)
+    for (int cp = text_ranges[i][0]; cp <= text_ranges[i][1]; cp++)
+      codepoints[j++] = cp;
+
+  *out_count = total;
+  return codepoints;
+}
+
 Fonts
 fetch_fonts (void)
 {
@@ -193,9 +264,15 @@ fetch_fonts (void)
 
   UnloadCodepoints (codepoints);
 
-  f.Lilex
-      = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
-                            LilexNerdFontMono_Regular_ttf_len, 20, NULL, 0);
+  int text_count = 0;
+  int *text_codepoints = build_text_codepoints (&text_count);
+
+  f.Lilex = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
+                                LilexNerdFontMono_Regular_ttf_len, 20,
+                                text_codepoints, text_count);
+
+  free (text_codepoints);
+
   return f;
 }
 
@@ -281,7 +358,7 @@ editor_handle_input (editor_state *state)
   int key = GetCharPressed (); // how actual letters are handled
   while (key > 0)
     {
-      if ((key > 31) && (key < 127))
+      if ((key > 31) && (key < 256))
         {
           if (cap_enough (&state->buffer, &state->buffer_capacity,
                           state->length + 2))
@@ -361,13 +438,24 @@ editor_handle_input (editor_state *state)
   if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
       && !IsKeyDown (KEY_LEFT_SHIFT) && state->cursor_posi > 0)
     {
-      state->cursor_posi--;
+      int temp_posi = state->cursor_posi - 1;
+      while (((state->buffer[temp_posi] & 0xC0) == 0x80) && (temp_posi > 0))
+        {
+          temp_posi--;
+        }
+      state->cursor_posi = temp_posi;
       state->selection_anchor = state->cursor_posi;
     }
   if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
       && !IsKeyDown (KEY_LEFT_SHIFT) && state->length > state->cursor_posi)
     {
-      state->cursor_posi++;
+      int temp_posi = state->cursor_posi + 1;
+      while (((state->buffer[temp_posi] & 0xC0) == 0x80)
+             && (temp_posi < state->length))
+        {
+          temp_posi++;
+        }
+      state->cursor_posi = temp_posi;
       state->selection_anchor = state->cursor_posi;
     }
   get_cursor_coordinates (state->buffer, state->cursor_posi,
