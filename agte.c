@@ -242,7 +242,8 @@ build_text_codepoints (int *out_count)
 
   *out_count = total;
   return codepoints;
-}
+} /* imma be honest with u i barely know wtf is going on here this function is
+     running on hopes and dreams... */
 
 Fonts
 fetch_fonts (void)
@@ -358,19 +359,24 @@ editor_handle_input (editor_state *state)
   int key = GetCharPressed (); // how actual letters are handled
   while (key > 0)
     {
-      if ((key > 31) && (key < 256))
+      if ((key > 31) && (key != 127))
         {
+          int encode_len = 0;
+          const char *encoded = CodepointToUTF8 (key, &encode_len);
+
           if (cap_enough (&state->buffer, &state->buffer_capacity,
-                          state->length + 2))
+                          state->length + encode_len + 1))
             {
 
               for (int i = state->length; i > state->cursor_posi; i--)
                 {
-                  state->buffer[i] = state->buffer[i - 1];
+                  state->buffer[i + encode_len - 1] = state->buffer[i - 1];
                 }
-              state->buffer[state->cursor_posi] = (char)key;
-              state->length++;
-              state->cursor_posi++;
+
+              memcpy (&state->buffer[state->cursor_posi], encoded, encode_len);
+
+              state->length += encode_len;
+              state->cursor_posi += encode_len;
               state->buffer[state->length] = '\0';
               state->modified = true;
 
@@ -401,12 +407,15 @@ editor_handle_input (editor_state *state)
           if (state->cursor_posi > 0)
             {
 
+              int prev = prev_char_start (state->buffer, state->cursor_posi);
+              int delete_len = state->cursor_posi - prev;
+
               for (int i = state->cursor_posi; i < state->length; i++)
                 {
-                  state->buffer[i - 1] = state->buffer[i];
+                  state->buffer[i - delete_len] = state->buffer[i];
                 }
-              state->length--;
-              state->cursor_posi--;
+              state->length -= delete_len;
+              state->cursor_posi = prev;
               state->selection_anchor = state->cursor_posi;
               state->buffer[state->length] = '\0';
               state->modified = true;
@@ -438,26 +447,18 @@ editor_handle_input (editor_state *state)
   if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
       && !IsKeyDown (KEY_LEFT_SHIFT) && state->cursor_posi > 0)
     {
-      int temp_posi = state->cursor_posi - 1;
-      while (((state->buffer[temp_posi] & 0xC0) == 0x80) && (temp_posi > 0))
-        {
-          temp_posi--;
-        }
-      state->cursor_posi = temp_posi;
+      state->cursor_posi = prev_char_start (state->buffer, state->cursor_posi);
       state->selection_anchor = state->cursor_posi;
     }
+
   if ((IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT))
       && !IsKeyDown (KEY_LEFT_SHIFT) && state->length > state->cursor_posi)
     {
-      int temp_posi = state->cursor_posi + 1;
-      while (((state->buffer[temp_posi] & 0xC0) == 0x80)
-             && (temp_posi < state->length))
-        {
-          temp_posi++;
-        }
-      state->cursor_posi = temp_posi;
+      state->cursor_posi
+          = next_char_start (state->buffer, state->cursor_posi, state->length);
       state->selection_anchor = state->cursor_posi;
     }
+
   get_cursor_coordinates (state->buffer, state->cursor_posi,
                           &state->cursor_line, &state->cursor_col);
 
@@ -780,7 +781,7 @@ editor_handle_input (editor_state *state)
        && (IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT)))
       && state->cursor_posi > 0)
     {
-      state->cursor_posi--;
+      state->cursor_posi = prev_char_start (state->buffer, state->cursor_posi);
       get_cursor_coordinates (state->buffer, state->cursor_posi,
                               &state->cursor_line, &state->cursor_col);
     }
@@ -789,7 +790,8 @@ editor_handle_input (editor_state *state)
        && (IsKeyPressed (KEY_RIGHT) || IsKeyPressedRepeat (KEY_RIGHT)))
       && state->length > state->cursor_posi)
     {
-      state->cursor_posi++;
+      state->cursor_posi
+          = next_char_start (state->buffer, state->cursor_posi, state->length);
       get_cursor_coordinates (state->buffer, state->cursor_posi,
                               &state->cursor_line, &state->cursor_col);
     }
