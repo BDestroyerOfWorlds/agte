@@ -468,27 +468,32 @@ editor_handle_input (editor_state *state)
       int target_line = state->cursor_line - 1;
       int line = 0;
       int start = 0;
-      int length = 0;
 
       for (int i = 0; i < state->length; i++)
         {
-          if ((line == target_line) && ((state->buffer[i] == '\n')))
-            {
-              length = i - start;
-              break;
-            }
+          if (line == target_line)
+            break;
           if (state->buffer[i] == '\n')
             {
               line++;
               start = i + 1;
             }
         }
-      int new_col;
-      if (state->cursor_col < length)
-        new_col = state->cursor_col;
-      else
-        new_col = length;
-      state->cursor_posi = start + new_col;
+
+      int posi = start;
+      int col = 0;
+      while (posi < state->length && state->buffer[posi] != '\n'
+             && col < state->cursor_col)
+        {
+          posi++;
+          while (posi < state->length && middle_byte (state->buffer[posi]))
+            {
+              posi++;
+            }
+          col++;
+        }
+
+      state->cursor_posi = posi;
       state->selection_anchor = state->cursor_posi;
     }
 
@@ -498,35 +503,35 @@ editor_handle_input (editor_state *state)
       int target_line = state->cursor_line + 1;
       int line = 0;
       int start = -1;
-      int length = 0;
-      bool line_present = false;
+
       for (int i = 0; i < state->length; i++)
         {
-          if ((line == target_line) && ((state->buffer[i] == '\n')))
+          if (line == target_line)
             {
-              length = i - start;
-              line_present = true;
               break;
             }
+
           if (state->buffer[i] == '\n')
             {
               line++;
               start = i + 1;
             }
         }
-      if (start != -1)
+      if (line == target_line)
         {
-          if (!line_present)
+          int posi = start;
+          int col = 0;
+          while (posi < state->length && state->buffer[posi] != '\n'
+                 && col < state->cursor_col)
             {
-              length = state->length - start;
+              posi++;
+              while (posi < state->length && middle_byte (state->buffer[posi]))
+                {
+                  posi++;
+                }
+              col++;
             }
-
-          int new_col;
-          if (state->cursor_col < length)
-            new_col = state->cursor_col;
-          else
-            new_col = length;
-          state->cursor_posi = start + new_col;
+          state->cursor_posi = posi;
           state->selection_anchor = state->cursor_posi;
         }
     }
@@ -803,27 +808,32 @@ editor_handle_input (editor_state *state)
       int target_line = state->cursor_line - 1;
       int line = 0;
       int start = 0;
-      int length = 0;
 
       for (int i = 0; i < state->length; i++)
         {
-          if ((line == target_line) && ((state->buffer[i] == '\n')))
-            {
-              length = i - start;
-              break;
-            }
+          if (line == target_line)
+            break;
           if (state->buffer[i] == '\n')
             {
               line++;
               start = i + 1;
             }
         }
-      int new_col;
-      if (state->cursor_col < length)
-        new_col = state->cursor_col;
-      else
-        new_col = length;
-      state->cursor_posi = start + new_col;
+
+      int posi = start;
+      int col = 0;
+      while (posi < state->length && state->buffer[posi] != '\n'
+             && col < state->cursor_col)
+        {
+          posi++;
+          while (posi < state->length && middle_byte (state->buffer[posi]))
+            {
+              posi++;
+            }
+          col++;
+        }
+
+      state->cursor_posi = posi;
     }
 
   if (IsKeyDown (KEY_LEFT_SHIFT)
@@ -832,35 +842,35 @@ editor_handle_input (editor_state *state)
       int target_line = state->cursor_line + 1;
       int line = 0;
       int start = -1;
-      int length = 0;
-      bool line_present = false;
+
       for (int i = 0; i < state->length; i++)
         {
-          if ((line == target_line) && ((state->buffer[i] == '\n')))
+          if (line == target_line)
             {
-              length = i - start;
-              line_present = true;
               break;
             }
+
           if (state->buffer[i] == '\n')
             {
               line++;
               start = i + 1;
             }
         }
-      if (start != -1)
+      if (line == target_line)
         {
-          if (!line_present)
+          int posi = start;
+          int col = 0;
+          while (posi < state->length && state->buffer[posi] != '\n'
+                 && col < state->cursor_col)
             {
-              length = state->length - start;
+              posi++;
+              while (posi < state->length && middle_byte (state->buffer[posi]))
+                {
+                  posi++;
+                }
+              col++;
             }
-
-          int new_col;
-          if (state->cursor_col < length)
-            new_col = state->cursor_col;
-          else
-            new_col = length;
-          state->cursor_posi = start + new_col;
+          state->cursor_posi = posi;
         }
     }
 
@@ -1105,15 +1115,15 @@ TODO */
 
 /*****************************************************************************/
 
-/* couldnt get it just how i wanted so commenting it out, do whatever you want
-with it.
+/* couldnt get it just how i wanted so commenting it out, do whatever you
+want with it.
 
 void
 autoscroll (editor_state *state)
 {
   float current_x
-      = 32 + state->scroll.x + state->cursor_col * (state->char_width + 0.5f);
-  float current_y = 16 + state->scroll.y + state->cursor_line * 22;
+      = 32 + state->scroll.x + state->cursor_col * (state->char_width +
+0.5f); float current_y = 16 + state->scroll.y + state->cursor_line * 22;
 
   const float left = 32.0f;
   const float top = 16.0f;
