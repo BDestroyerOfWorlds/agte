@@ -1003,13 +1003,24 @@ editor_render (editor_state *state, Fonts *fonts)
               first_line_end++;
             }
 
-          int first_line_len = first_line_end - first_line_start;
-
           float x1
               = 32 + state->scroll.x + start_col * (state->char_width + 0.5f);
           float y1 = 16 + state->scroll.y + start_line * 22;
+
+          int helper_line,
+              first_line_end_col = 0; // instead of calculating with
+                                      // len we use cols so bytewise
+                                      // size doesnt matter anymore.
+
+          get_cursor_coordinates (state->buffer, first_line_end, &helper_line,
+                                  &first_line_end_col);
+
+          /* you can actually edit the get_cursor_coordinates to accept NULL
+           * and it would be a lot cleaner but since i dont need it anywhere
+           * else i will just use the helper line. doesnt really matter...*/
+
           float x2 = 32 + state->scroll.x
-                     + first_line_len * (state->char_width + 0.5f);
+                     + first_line_end_col * (state->char_width + 0.5f);
 
           DrawRectangle (x1, y1, x2 - x1, 22, HIGHLIGHT);
 
@@ -1038,12 +1049,23 @@ editor_render (editor_state *state, Fonts *fonts)
                   mid_line_end++;
                 }
 
-              int mid_line_len = mid_line_end - mid_line_start;
-
               float mid_x1 = 32 + state->scroll.x;
               float mid_y1 = 16 + state->scroll.y + (mid_line * 22);
+
+              int helper_line,
+                  mid_line_end_col = 0; // same logic here as the first line.
+                                        // helper line is not a real line only
+                                        // used for calculation.
+
+              /* I guess you dont NEED to make them 0 since it will be
+               * instantly overwritten anyways but whatever you cant be
+               * "too safe" */
+
+              get_cursor_coordinates (state->buffer, mid_line_end,
+                                      &helper_line, &mid_line_end_col);
+
               float mid_x2 = 32 + state->scroll.x
-                             + mid_line_len * (state->char_width + 0.5f);
+                             + mid_line_end_col * (state->char_width + 0.5f);
 
               DrawRectangle (mid_x1, mid_y1, mid_x2 - mid_x1, 22, HIGHLIGHT);
             }
