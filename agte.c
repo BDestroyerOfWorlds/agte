@@ -1098,6 +1098,24 @@ editor_render (editor_state *state, Fonts *fonts)
   DrawRectangle (cursor_x, cursor_y, 2, (FONT_SIZE - 2),
                  BETTER_WHITE); /*this is the cursor*/
 
+  int bottom_border_line
+      = 18 + state->scroll.y + (line_count * (FONT_SIZE + 2));
+
+  float longest_line_border
+      = 38 + state->scroll.x + (max_line_len * (state->char_width + 0.5f));
+
+  if ((line_count) >= (screen_height / (FONT_SIZE + 2)))
+    {
+
+      DrawRectangle (0, bottom_border_line, screen_width / 192, 1, MAUVE);
+    }
+
+  if ((max_line_len) >= ((screen_width - 128 - 32 - state->char_width)
+                         / (state->char_width + 0.5f)))
+    {
+      DrawRectangle (longest_line_border, 0, 1, screen_height / 96, MAUVE);
+    }
+
   EndScissorMode ();
 
   draw_editor_borders ();
