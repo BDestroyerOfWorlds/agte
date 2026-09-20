@@ -42,6 +42,8 @@
 #define BETTER_RED (Color){ 0xD2, 0x0F, 0x39, 255 }
 #define HIGHLIGHT (Color){ 0x89, 0xB4, 0xFA, 95 }
 
+#define FONT_SIZE 24
+
 /*****************************************************************************/
 
 typedef struct
@@ -246,7 +248,7 @@ build_text_codepoints (int *out_count)
      running on hopes and dreams... */
 
 Fonts
-fetch_fonts (void)
+fetch_fonts ()
 {
   Fonts f;
 
@@ -263,14 +265,21 @@ fetch_fonts (void)
                                 LilexNerdFontMono_Regular_ttf_len, 80,
                                 codepoints, codepoint_count);
 
+  SetTextureFilter (f.icons.texture, TEXTURE_FILTER_POINT);
+
   UnloadCodepoints (codepoints);
 
   int text_count = 0;
   int *text_codepoints = build_text_codepoints (&text_count);
 
   f.Lilex = LoadFontFromMemory (".ttf", LilexNerdFontMono_Regular_ttf,
-                                LilexNerdFontMono_Regular_ttf_len, 20,
+                                LilexNerdFontMono_Regular_ttf_len, FONT_SIZE,
                                 text_codepoints, text_count);
+
+  /* SetTextureFilter (f.Lilex.texture, TEXTURE_FILTER_POINT); */
+
+  /* not sure about this, dont think it really helps and im just not very happy
+   * with the text rendering... */
 
   free (text_codepoints);
 
@@ -920,19 +929,20 @@ editor_render (editor_state *state, Fonts *fonts)
           fmaxf (panel.width, ((screen_width / 4) + 32
                                + max_line_len * (state->char_width + 0.5F))),
           fmaxf (screen_height - 13,
-                 (line_count * 22) + (screen_height / 4)) };
+                 (line_count * (FONT_SIZE + 2)) + (screen_height / 4)) };
 
   GuiScrollPanel (panel, NULL, content, &state->scroll, &state->view);
   BeginScissorMode (state->view.x, state->view.y, state->view.width,
                     state->view.height);
 
   DrawTextEx (fonts->Lilex, state->buffer,
-              (Vector2){ 32 + state->scroll.x, 16 + state->scroll.y }, 20, 1,
-              BETTER_WHITE);
+              (Vector2){ 32 + state->scroll.x, 16 + state->scroll.y },
+              FONT_SIZE, 1, BETTER_WHITE);
 
   float cursor_x = 32 + state->scroll.x
                    + (state->cursor_col * (state->char_width + 0.5f));
-  float cursor_y = 16 + state->scroll.y + (state->cursor_line * 22);
+  float cursor_y
+      = 16 + state->scroll.y + (state->cursor_line * (FONT_SIZE + 2));
 
   // DRAWING THE SELECTION HIGHLIGHT
 
@@ -965,16 +975,18 @@ editor_render (editor_state *state, Fonts *fonts)
           float highligt_x1 = 32 + state->scroll.x
                               + start_col * ((state->char_width) + 0.5f);
 
-          float highligt_y1 = 16 + state->scroll.y + start_line * 22;
+          float highligt_y1
+              = 16 + state->scroll.y + start_line * (FONT_SIZE + 2);
 
           float highligt_x2
               = 32 + state->scroll.x + end_col * ((state->char_width) + 0.5f);
 
-          float highligt_y2 = 16 + state->scroll.y + end_line * 22;
+          float highligt_y2
+              = 16 + state->scroll.y + end_line * (FONT_SIZE + 2);
 
           DrawRectangle (
               highligt_x1, highligt_y1, highligt_x2 - highligt_x1,
-              highligt_y2 - highligt_y1 + 22,
+              highligt_y2 - highligt_y1 + (FONT_SIZE + 2),
               HIGHLIGHT); // OMG I LOVE PULLING NUMBERS OUT MY ASS!!! X3 XD
         }
       else
@@ -1005,7 +1017,7 @@ editor_render (editor_state *state, Fonts *fonts)
 
           float x1
               = 32 + state->scroll.x + start_col * (state->char_width + 0.5f);
-          float y1 = 16 + state->scroll.y + start_line * 22;
+          float y1 = 16 + state->scroll.y + start_line * (FONT_SIZE + 2);
 
           int helper_line,
               first_line_end_col = 0; // instead of calculating with
@@ -1022,7 +1034,7 @@ editor_render (editor_state *state, Fonts *fonts)
           float x2 = 32 + state->scroll.x
                      + first_line_end_col * (state->char_width + 0.5f);
 
-          DrawRectangle (x1, y1, x2 - x1, 22, HIGHLIGHT);
+          DrawRectangle (x1, y1, x2 - x1, (FONT_SIZE + 2), HIGHLIGHT);
 
           for (int mid_line = start_line + 1; mid_line < end_line; mid_line++)
             {
@@ -1050,7 +1062,8 @@ editor_render (editor_state *state, Fonts *fonts)
                 }
 
               float mid_x1 = 32 + state->scroll.x;
-              float mid_y1 = 16 + state->scroll.y + (mid_line * 22);
+              float mid_y1
+                  = 16 + state->scroll.y + (mid_line * (FONT_SIZE + 2));
 
               int helper_line,
                   mid_line_end_col = 0; // same logic here as the first line.
@@ -1067,20 +1080,22 @@ editor_render (editor_state *state, Fonts *fonts)
               float mid_x2 = 32 + state->scroll.x
                              + mid_line_end_col * (state->char_width + 0.5f);
 
-              DrawRectangle (mid_x1, mid_y1, mid_x2 - mid_x1, 22, HIGHLIGHT);
+              DrawRectangle (mid_x1, mid_y1, mid_x2 - mid_x1, (FONT_SIZE + 2),
+                             HIGHLIGHT);
             }
 
           float last_x1 = 32 + state->scroll.x;
-          float last_y1 = 16 + state->scroll.y + end_line * 22;
+          float last_y1 = 16 + state->scroll.y + end_line * (FONT_SIZE + 2);
           float last_x2
               = 32 + state->scroll.x + end_col * (state->char_width + 0.5f);
 
-          DrawRectangle (last_x1, last_y1, last_x2 - last_x1, 22, HIGHLIGHT);
+          DrawRectangle (last_x1, last_y1, last_x2 - last_x1, (FONT_SIZE + 2),
+                         HIGHLIGHT);
         }
     }
   // HIGHLIGHT END
 
-  DrawRectangle (cursor_x, cursor_y, 2, 16,
+  DrawRectangle (cursor_x, cursor_y, 2, (FONT_SIZE - 2),
                  BETTER_WHITE); /*this is the cursor*/
 
   EndScissorMode ();
@@ -1131,7 +1146,8 @@ TODO */
 
   DrawTextEx (fonts->Lilex,
               TextFormat ("%d:%d", state->cursor_line, state->cursor_col),
-              (Vector2){ screen_width - 96, screen_height - 52 }, 20, 1,
+              (Vector2){ screen_width - 102, screen_height - 48 }, FONT_SIZE,
+              1,
               BETTER_BLUE); // just added a little counter on the bottom right.
 }
 
@@ -1193,7 +1209,7 @@ main (int argc, char *argv[])
 
   Fonts fonts = fetch_fonts ();
 
-  state.char_width = MeasureTextEx (fonts.Lilex, "WW", 20, 1).x / 2.0f;
+  state.char_width = MeasureTextEx (fonts.Lilex, "WW", FONT_SIZE, 1).x / 2.0f;
 
   set_style ();
 
