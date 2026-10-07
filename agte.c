@@ -365,7 +365,8 @@ editor_init (editor_state *state, const char *path)
 void
 editor_handle_input (editor_state *state)
 {
-  int key = GetCharPressed (); // how actual letters are handled
+  int key = GetCharPressed (); // how actual letters are handled, this can be
+                               // its own helper function.
   while (key > 0)
     {
       if ((key > 31) && (key != 127))
@@ -395,7 +396,9 @@ editor_handle_input (editor_state *state)
       key = GetCharPressed ();
     }
 
-  if ((IsKeyPressed (KEY_BACKSPACE) || (IsKeyPressedRepeat (KEY_BACKSPACE))))
+  if ((IsKeyPressed (KEY_BACKSPACE)
+       || (IsKeyPressedRepeat (
+           KEY_BACKSPACE)))) // this can be its own helper function
 
     {
       int selection_start, selection_end;
@@ -446,14 +449,17 @@ editor_handle_input (editor_state *state)
         }
     }
 
-  if (IsKeyDown (KEY_LEFT_CONTROL) && IsKeyPressed (KEY_S))
+  if (IsKeyDown (KEY_LEFT_CONTROL)
+      && IsKeyPressed (KEY_S)) // this is fine as it is actually?
     {
       SaveFileText (state->file_path, state->buffer);
       state->file_exists = true;
       state->modified = false;
     }
 
-  if ((IsKeyPressedRepeat (KEY_LEFT) || IsKeyPressed (KEY_LEFT))
+  if ((IsKeyPressedRepeat (KEY_LEFT)
+       || IsKeyPressed (
+           KEY_LEFT)) // the whole shifts can be its own helper function.
       && !IsKeyDown (KEY_LEFT_SHIFT) && state->cursor_posi > 0)
     {
       state->cursor_posi = prev_char_start (state->buffer, state->cursor_posi);
@@ -563,19 +569,21 @@ editor_handle_input (editor_state *state)
       state->selection_anchor = state->cursor_posi;
     }
 
-  if (IsKeyPressed (KEY_PAGE_UP))
+  if (IsKeyPressed (KEY_PAGE_UP)) // this is fine as it is.
     {
       state->cursor_posi = 0;
       state->selection_anchor = state->cursor_posi;
     }
 
-  if (IsKeyPressed (KEY_PAGE_DOWN))
+  if (IsKeyPressed (KEY_PAGE_DOWN)) // this is fine as it is.
     {
       state->cursor_posi = state->length;
       state->selection_anchor = state->cursor_posi;
     }
 
-  if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_C)))
+  if ((IsKeyDown (KEY_LEFT_CONTROL))
+      && (IsKeyPressed (KEY_C))) // fine, maybe the copy and cut shared code
+                                 // can be made into a helper??
     {
       int selection_start, selection_end;
 
@@ -714,7 +722,9 @@ editor_handle_input (editor_state *state)
       state->modified = true;
     }
 
-  if ((IsKeyDown (KEY_LEFT_CONTROL)) && (IsKeyPressed (KEY_V)))
+  if ((IsKeyDown (KEY_LEFT_CONTROL))
+      && (IsKeyPressed (
+          KEY_V))) // probably fine as it is but formatting could be nice?
     {
 
       const char *clipboard = GetClipboardText ();
@@ -739,7 +749,7 @@ editor_handle_input (editor_state *state)
       state->selection_anchor = state->cursor_posi;
     }
 
-  if (IsKeyPressed (KEY_TAB))
+  if (IsKeyPressed (KEY_TAB)) // fine as is.
     {
 
       if (cap_enough (&state->buffer, &state->buffer_capacity,
@@ -944,7 +954,9 @@ editor_render (editor_state *state, Fonts *fonts)
   float cursor_y
       = 16 + state->scroll.y + (state->cursor_line * (FONT_SIZE + 2));
 
-  // DRAWING THE SELECTION HIGHLIGHT
+  // DRAWING THE SELECTION HIGHLIGHT, maybe could be its own function and i
+  // should make it that its redrawn only when a change is made, i suppose i
+  // can force it to wait for event?
 
   int selection_start, selection_end;
 
@@ -1154,7 +1166,10 @@ because they
 are slightly
 different
 sizes so thats
-TODO */
+TODO,
+
+as ab update, maybe not to be honest... 10/7/26
+*/
 
   if (state->caps)
     {
